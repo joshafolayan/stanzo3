@@ -10,9 +10,10 @@ const ProductCard = ({ product }) => {
     const [isAdded, setIsAdded] = useState(false);
 
     // Determine image URL - fallback to placeholder if not found or using API path
-    const imgUrl = product.image.startsWith('/')
+    // Determine image URL - fallback to placeholder if not found or using API path
+    const imgUrl = product.image?.startsWith('/')
         ? product.image // Local absolute path (public folder)
-        : product.image;
+        : product.image || '';
 
     const handleAddToCart = () => {
         addToCart(product, selectedColor.name, selectedSize);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Package, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, LogOut, Users } from 'lucide-react';
 import clsx from 'clsx';
 
 const AdminLayout = () => {
@@ -13,6 +13,7 @@ const AdminLayout = () => {
 
     const navItems = [
         { label: 'Products', icon: Package, path: '/admin/products' },
+        { label: 'Users', icon: Users, path: '/admin/users' },
     ];
 
     return (

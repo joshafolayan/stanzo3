@@ -22,6 +22,17 @@ app.get('/', (req, res) => {
     res.send('Stanzo3 API is running');
 });
 
+// Serve static files from client public folder (for uploaded images)
+app.use('/products', express.static(path.join(__dirname, '../client/public/products')));
+
+// Serve React App under standard static middleware
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// Catch-all handler for any request that doesn't match above routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Header from './components/Header';
-import Hero from './components/Hero';
-import ProductGrid from './components/ProductGrid';
-import CartModal from './components/CartModal';
-import PaymentModal from './components/PaymentModal';
+import Header from '../components/Header';
+import Hero from '../components/Hero';
+import ProductGrid from '../components/ProductGrid';
+import CartModal from '../components/CartModal';
+import PaymentModal from '../components/PaymentModal';
 
 const StoreFront = () => {
     const [products, setProducts] = useState([]);
@@ -15,7 +15,7 @@ const StoreFront = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/api/products');
+                const response = await axios.get('/api/products');
                 setProducts(response.data);
                 setLoading(false);
             } catch (err) {

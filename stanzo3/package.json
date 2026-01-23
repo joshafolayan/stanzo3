@@ -1,0 +1,12 @@
+{
+  "name": "stanzo3-monorepo",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd server && npm start",
+    "build": "cd client && npm install && npm run build && cd ../server && npm install"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "private": true
+}

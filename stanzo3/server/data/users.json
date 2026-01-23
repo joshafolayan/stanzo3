@@ -2,7 +2,13 @@
   {
     "id": "admin-1",
     "username": "admin",
-    "password": "$2b$10$upSuYMNB7hlexf1OCyTKSeJH18aJIJYuzHMTo1fWC4TuN70WglBJ.", 
+    "password": "$2b$10$upSuYMNB7hlexf1OCyTKSeJH18aJIJYuzHMTo1fWC4TuN70WglBJ.",
+    "role": "admin"
+  },
+  {
+    "id": "admin-1769179441198",
+    "username": "manger",
+    "password": "$2b$10$jI02PxGmQa/CRh1fDAvVNOLaArgauYs5qbuvvmFeMrjcLg8MU89hC",
     "role": "admin"
   }
 ]

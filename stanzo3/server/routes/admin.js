@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const db = require('../utils/db');
+const Product = require('../models/Product');
+const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const fs = require('fs-extra');
 
@@ -25,24 +26,25 @@ const upload = multer({ storage: storage });
 
 // GET /api/admin/products - Get all products (protected not strictly necessary but good practice for admin view if it had sensitive info)
 router.get('/products', protect, async (req, res) => {
-    const products = await db.read('products');
+    const products = await Product.find({});
     res.json(products);
 });
 
 // POST /api/admin/products - Create Product
 router.post('/products', protect, upload.single('image'), async (req, res) => {
     try {
-        const products = await db.read('products');
-        const newProduct = JSON.parse(req.body.productData); // Expecting JSON string for data part
+        const productData = JSON.parse(req.body.productData); // Expecting JSON string for data part
 
         if (req.file) {
-            newProduct.image = '/products/' + req.file.filename;
+            productData.image = '/products/' + req.file.filename;
         }
 
-        newProduct.id = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-        products.push(newProduct);
+        // Generate numeric ID for compatibility
+        // In a real app, use _id or a dedicated counter collection
+        const count = await Product.countDocuments();
+        productData.id = Date.now(); // Simple unique numeric-like ID
 
-        await db.write('products', products);
+        const newProduct = await Product.create(productData);
         res.status(201).json(newProduct);
     } catch (error) {
         console.error(error);
@@ -53,25 +55,23 @@ router.post('/products', protect, upload.single('image'), async (req, res) => {
 // PUT /api/admin/products/:id - Update Product
 router.put('/products/:id', protect, upload.single('image'), async (req, res) => {
     try {
-        const products = await db.read('products');
         const id = parseInt(req.params.id);
-        const index = products.findIndex(p => p.id === id);
+        const productData = JSON.parse(req.body.productData);
 
-        if (index === -1) {
+        if (req.file) {
+            productData.image = '/products/' + req.file.filename;
+        }
+
+        const updatedProduct = await Product.findOneAndUpdate(
+            { id: id },
+            productData,
+            { new: true }
+        );
+
+        if (!updatedProduct) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        const updatedData = JSON.parse(req.body.productData);
-
-        // Merge updates
-        const updatedProduct = { ...products[index], ...updatedData };
-
-        if (req.file) {
-            updatedProduct.image = '/products/' + req.file.filename;
-        }
-
-        products[index] = updatedProduct;
-        await db.write('products', products);
         res.json(updatedProduct);
     } catch (error) {
         console.error(error);
@@ -82,22 +82,73 @@ router.put('/products/:id', protect, upload.single('image'), async (req, res) =>
 // DELETE /api/admin/products/:id - Delete Product
 router.delete('/products/:id', protect, async (req, res) => {
     try {
-        let products = await db.read('products');
         const id = parseInt(req.params.id);
-        const product = products.find(p => p.id === id);
+        const result = await Product.findOneAndDelete({ id: id });
 
-        if (!product) {
+        if (!result) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
         // Optional: Delete image file from FS? 
-        // For now, let's keep it simple and just remove record.
 
-        products = products.filter(p => p.id !== id);
-        await db.write('products', products);
         res.json({ message: 'Product removed' });
     } catch (error) {
         res.status(500).json({ message: 'Server error deleting product' });
+    }
+});
+
+// GET /api/admin/users - Get all users
+router.get('/users', protect, async (req, res) => {
+    try {
+        const users = await User.find({}).select('-password');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error fetching users' });
+    }
+});
+
+// POST /api/admin/users - Create User
+router.post('/users', protect, async (req, res) => {
+    try {
+        const { username, password, role = 'admin' } = req.body;
+
+        const userExists = await User.findOne({ username });
+        if (userExists) {
+            return res.status(400).json({ message: 'Username already exists' });
+        }
+
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = await User.create({
+            username,
+            password: hashedPassword,
+            role
+        });
+
+        const safeUser = newUser.toObject();
+        delete safeUser.password;
+
+        res.status(201).json(safeUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error creating user' });
+    }
+});
+
+// DELETE /api/admin/users/:id - Delete User
+router.delete('/users/:id', protect, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const count = await User.countDocuments();
+        if (count <= 1) {
+            return res.status(400).json({ message: 'Cannot delete the last admin user' });
+        }
+
+        await User.findByIdAndDelete(id);
+        res.json({ message: 'User removed' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error deleting user' });
     }
 });
 

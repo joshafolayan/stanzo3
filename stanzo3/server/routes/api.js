@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../utils/db');
+const Product = require('../models/Product');
 
-// GET /api/products - Public
+// GET /api/products - Get all products
 router.get('/products', async (req, res) => {
-    const products = await db.read('products');
-    res.json(products);
+    try {
+        const products = await Product.find({});
+        res.json(products);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error fetching products' });
+    }
 });
 
 // POST /api/checkout
