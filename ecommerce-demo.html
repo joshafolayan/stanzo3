@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STANZO3 - COLLECTIONS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .cart-icon:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .hero {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .hero h1 {
+            color: #1a237e;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            color: #718096;
+        }
+
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-name {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #1a237e;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+        }
+
+        /* Color Selection */
+        .color-selection {
+            margin-bottom: 1rem;
+        }
+
+        .label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .color-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .color-option {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .color-option:hover,
+        .color-option.selected {
+            border-color: #1a237e;
+            transform: scale(1.1);
+        }
+
+        /* Size Selection */
+        .size-selection {
+            margin-bottom: 1.5rem;
+        }
+
+        .size-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .size-option {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .size-option:hover,
+        .size-option.selected {
+            border-color: #1a237e;
+            background: #1a237e;
+            color: white;
+        }
+
+        /* Add to Cart Button */
+        .add-to-cart {
+            width: 100%;
+            padding: 0.875rem;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-to-cart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .add-to-cart:active {
+            transform: translateY(0);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #1a237e;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .cart-item-image {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-item-variant {
+            font-size: 0.875rem;
+            color: #718096;
+        }
+
+        .cart-item-price {
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .cart-total {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 1rem;
+            margin-top: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.125rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 35, 126, 0.4);
+        }
+
+        /* Payment Modal */
+        .payment-details {
+            background: #fff5f5;
+            border: 2px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .payment-details h3 {
+            color: #1a237e;
+            margin-bottom: 1rem;
+        }
+
+        .bank-info {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .bank-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .bank-row:last-child {
+            border-bottom: none;
+        }
+
+        .bank-label {
+            color: #718096;
+            font-size: 0.875rem;
+        }
+
+        .bank-value {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .amount {
+            color: #ff6b6b;
+            font-size: 1.25rem;
+        }
+
+        .payment-note {
+            font-size: 0.875rem;
+            color: #718096;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        .whatsapp-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.125rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .whatsapp-btn:hover {
+            background: #1fb855;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+        }
+
+        .success-message {
+            background: #f0fff4;
+            border: 2px solid #48bb78;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            color: #2f855a;
+            margin-bottom: 1rem;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #718096;
+        }
+
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🛍️ STANZO3 </div>
+            <div class="cart-icon" onclick="openCart()">
+                🛒 Cart
+                <span class="cart-count" id="cartCount">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Premium Bags Collection</h1>
+            <p>Discover quality products with multiple colors and sizes to match your style</p>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-grid" id="productsGrid"></div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div class="modal" id="cartModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🛒 Your Cart</h2>
+                <button class="close-modal" onclick="closeCart()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="cartItems"></div>
+                <button class="checkout-btn" id="checkoutBtn" onclick="checkout()">Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💳 Payment Details</h2>
+                <button class="close-modal" onclick="closePayment()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-details">
+                    <h3>Bank Transfer Details</h3>
+                    <div class="bank-info">
+                        <div class="bank-row">
+                            <span class="bank-label">Bank Name:</span>
+                            <span class="bank-value">First Bank Nigeria</span>
+                        </div>
+                        <div class="bank-row">
+                            <span class="bank-label">Account Name:</span>
+                            <span class="bank-value">Stanzo3 Collections</span>
+                        </div>
+                        <div class="bank-row">
+                            <span class="bank-label">Account Number:</span>
+                            <span class="bank-value">0123456789</span>
+                        </div>
+                        <div class="bank-row">
+                            <span class="bank-label">Amount:</span>
+                            <span class="bank-value amount" id="totalAmount">₦0</span>
+                        </div>
+                    </div>
+                    <p class="payment-note">Please transfer the exact amount and click the button below after payment</p>
+                </div>
+
+                <div class="success-message">
+                    <strong>✓ Order Confirmed!</strong><br>
+                    Click below to notify us via WhatsApp
+                </div>
+
+                <button class="whatsapp-btn" onclick="sendWhatsApp()">
+                    <span style="font-size: 1.5rem;">📱</span>
+                    Chat on WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Products Data
+        const products = [
+            {
+                id: 1,
+                name: "Classic Leather Bag",
+                price: 25000,
+                emoji: "👜",
+                imageUrl: "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=400&h=400&fit=crop",
+                colors: [
+                    { name: "Black", hex: "#000000" },
+                    { name: "Brown", hex: "#8B4513" },
+                    { name: "Red", hex: "#DC143C" },
+                    { name: "Navy", hex: "#1a237e" }
+                ],
+                sizes: ["Small", "Medium", "Large"]
+            },
+            {
+                id: 2,
+                name: "Sport Sneakers",
+                price: 18000,
+                emoji: "👟",
+                Image: "/home/jay/Downloads/WhatsApp Image 2025-12-14 at 3.41.52 PM.jpeg",
+                colors: [
+                    { name: "White", hex: "#FFFFFF" },
+                    { name: "Black", hex: "#000000" },
+                    { name: "Blue", hex: "#4169E1" },
+                    { name: "Pink", hex: "#FF69B4" }
+                ],
+                sizes: ["38", "39", "40", "41", "42", "43"]
+            },
+            {
+                id: 3,
+                name: "Elegant Handbag",
+                price: 32000,
+                emoji: "👝",
+                colors: [
+                    { name: "Beige", hex: "#F5F5DC" },
+                    { name: "Black", hex: "#000000" },
+                    { name: "Gold", hex: "#FFD700" }
+                ],
+                sizes: ["One Size"]
+            },
+            {
+                id: 4,
+                name: "Formal Shoes",
+                price: 28000,
+                emoji: "👞",
+                colors: [
+                    { name: "Black", hex: "#000000" },
+                    { name: "Brown", hex: "#8B4513" },
+                    { name: "Tan", hex: "#D2691E" }
+                ],
+                sizes: ["39", "40", "41", "42", "43", "44"]
+            }
+        ];
+
+        // Cart state
+        let cart = [];
+
+        // Initialize
+        renderProducts();
+        updateCartCount();
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = products.map(product => `
+                <div class="product-card">
+                    <div class="product-image">${product.emoji}</div>
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">₦${product.price.toLocaleString()}</div>
+                        
+                        <div class="color-selection">
+                            <label class="label">Color:</label>
+                            <div class="color-options" id="colors-${product.id}">
+                                ${product.colors.map((color, index) => `
+                                    <div class="color-option ${index === 0 ? 'selected' : ''}" 
+                                         style="background: ${color.hex}; ${color.hex === '#FFFFFF' ? 'border: 2px solid #e2e8f0;' : ''}"
+                                         onclick="selectColor(${product.id}, '${color.name}', this)"
+                                         data-color="${color.name}"></div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="size-selection">
+                            <label class="label">Size:</label>
+                            <div class="size-options" id="sizes-${product.id}">
+                                ${product.sizes.map((size, index) => `
+                                    <div class="size-option ${index === 0 ? 'selected' : ''}"
+                                         onclick="selectSize(${product.id}, '${size}', this)"
+                                         data-size="${size}">${size}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <button class="add-to-cart" onclick="addToCart(${product.id})">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectColor(productId, colorName, element) {
+            const container = element.parentElement;
+            container.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        function selectSize(productId, size, element) {
+            const container = element.parentElement;
+            container.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const selectedColor = document.querySelector(`#colors-${productId} .color-option.selected`).dataset.color;
+            const selectedSize = document.querySelector(`#sizes-${productId} .size-option.selected`).dataset.size;
+            
+            cart.push({
+                ...product,
+                selectedColor,
+                selectedSize
+            });
+            
+            updateCartCount();
+            
+            // Show brief animation/feedback
+            const btn = event.target;
+            btn.textContent = '✓ Added!';
+            btn.style.background = '#48bb78';
+            setTimeout(() => {
+                btn.textContent = 'Add to Cart';
+                btn.style.background = '';
+            }, 1000);
+        }
+
+        function updateCartCount() {
+            document.getElementById('cartCount').textContent = cart.length;
+        }
+
+        function openCart() {
+            renderCart();
+            document.getElementById('cartModal').classList.add('active');
+        }
+
+        function closeCart() {
+            document.getElementById('cartModal').classList.remove('active');
+        }
+
+        function renderCart() {
+            const cartItems = document.getElementById('cartItems');
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="empty-cart"><p>Your cart is empty</p><p style="font-size: 3rem; margin: 1rem 0;">🛒</p></div>';
+                document.getElementById('checkoutBtn').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('checkoutBtn').style.display = 'block';
+            
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            
+            cartItems.innerHTML = `
+                ${cart.map((item, index) => `
+                    <div class="cart-item">
+                        <div class="cart-item-image">${item.emoji}</div>
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-variant">Color: ${item.selectedColor} | Size: ${item.selectedSize}</div>
+                        </div>
+                        <div class="cart-item-price">₦${item.price.toLocaleString()}</div>
+                    </div>
+                `).join('')}
+                
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span>₦${total.toLocaleString()}</span>
+                </div>
+            `;
+        }
+
+        function checkout() {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('totalAmount').textContent = `₦${total.toLocaleString()}`;
+            
+            closeCart();
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function closePayment() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+
+        function sendWhatsApp() {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            
+            let message = `Hello! I've just made a payment for my order:\n\n`;
+            message += `*Order Details:*\n`;
+            cart.forEach((item, index) => {
+                message += `${index + 1}. ${item.name} - ${item.selectedColor}, Size ${item.selectedSize} - ₦${item.price.toLocaleString()}\n`;
+            });
+            message += `\n*Total Amount:* ₦${total.toLocaleString()}\n\n`;
+            message += `I've transferred the amount to your account. Please confirm receipt. Thank you!`;
+            
+            const encodedMessage = encodeURIComponent(message);
+            const phoneNumber = '2348067117690'
+            
+            window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+        }
+    </script>
+</body>
+</html>
