@@ -17,7 +17,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
         message += `I've transferred the amount to your account. Please confirm receipt. Thank you!`;
 
         const encodedMessage = encodeURIComponent(message);
-        const phoneNumber = '2348012345678'; // Example number
+        const phoneNumber = '2348067117690'; // Mr Stanley
 
         window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
     };
