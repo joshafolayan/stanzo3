@@ -23,7 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
     res.send('Stanzo3 API is running');
 });
 
