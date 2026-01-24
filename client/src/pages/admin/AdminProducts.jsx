@@ -24,7 +24,7 @@ const AdminProducts = () => {
 
     const fetchProducts = async () => {
         try {
-            const { data } = await axios.get('http://localhost:3000/api/admin/products');
+            const { data } = await axios.get('/api/admin/products');
             setProducts(data);
         } catch (error) {
             console.error('Failed to fetch products', error);
