@@ -50,8 +50,10 @@ const AdminProducts = () => {
         };
 
         formData.append('productData', JSON.stringify(productPayload));
-        if (data.image && data.image[0]) {
-            formData.append('image', data.image[0]);
+        if (data.images && data.images.length > 0) {
+            for (let i = 0; i < data.images.length; i++) {
+                formData.append('images', data.images[i]);
+            }
         }
 
         try {
@@ -132,7 +134,7 @@ const AdminProducts = () => {
                         {products.map(product => (
                             <tr key={product.id} className="hover:bg-gray-50">
                                 <td className="p-4">
-                                    <img src={product.image} alt={product.name} className="w-12 h-12 rounded object-cover bg-gray-200" />
+                                    <img src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.jpg'} alt={product.name} className="w-12 h-12 rounded object-cover bg-gray-200" />
                                 </td>
                                 <td className="p-4 font-medium">{product.name}</td>
                                 <td className="p-4 text-gray-600">₦{product.price.toLocaleString()}</td>
@@ -171,9 +173,9 @@ const AdminProducts = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Product Image</label>
+                                <label className="block text-sm font-medium mb-1">Product Images</label>
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition">
-                                    <input type="file" {...register('image')} accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                    <input type="file" {...register('images')} multiple accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                                 </div>
                             </div>
 

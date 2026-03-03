@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Package, LogOut, Users } from 'lucide-react';
+import { LayoutDashboard, Package, LogOut, Users, Key } from 'lucide-react';
 import clsx from 'clsx';
 
 const AdminLayout = () => {
@@ -40,6 +40,19 @@ const AdminLayout = () => {
                             <span>{item.label}</span>
                         </Link>
                     ))}
+
+                    <Link
+                        to="/admin/forgot-password"
+                        className={clsx(
+                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                            location.pathname === '/admin/forgot-password'
+                                ? "bg-slate-800 text-white"
+                                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                        )}
+                    >
+                        <Key className="w-5 h-5" />
+                        <span>Change Password</span>
+                    </Link>
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">

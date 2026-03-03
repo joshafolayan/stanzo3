@@ -31,12 +31,14 @@ router.get('/products', protect, async (req, res) => {
 });
 
 // POST /api/admin/products - Create Product
-router.post('/products', protect, upload.single('image'), async (req, res) => {
+router.post('/products', protect, upload.array('images', 5), async (req, res) => {
     try {
         const productData = JSON.parse(req.body.productData); // Expecting JSON string for data part
 
-        if (req.file) {
-            productData.image = '/products/' + req.file.filename;
+        if (req.files && req.files.length > 0) {
+            productData.images = req.files.map(file => '/products/' + file.filename);
+        } else if (!productData.images) {
+            productData.images = [];
         }
 
         // Generate numeric ID for compatibility
@@ -53,13 +55,15 @@ router.post('/products', protect, upload.single('image'), async (req, res) => {
 });
 
 // PUT /api/admin/products/:id - Update Product
-router.put('/products/:id', protect, upload.single('image'), async (req, res) => {
+router.put('/products/:id', protect, upload.array('images', 5), async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const productData = JSON.parse(req.body.productData);
 
-        if (req.file) {
-            productData.image = '/products/' + req.file.filename;
+        if (req.files && req.files.length > 0) {
+            // For simplicity, if new files are uploaded, we replace the old ones. 
+            // A more complex app might allow adding/removing specific images.
+            productData.images = req.files.map(file => '/products/' + file.filename);
         }
 
         const updatedProduct = await Product.findOneAndUpdate(

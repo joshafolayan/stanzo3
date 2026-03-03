@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminLogin = () => {
@@ -60,6 +60,15 @@ const AdminLogin = () => {
                     >
                         Login
                     </button>
+
+                    <div className="text-center mt-4">
+                        <Link
+                            to="/admin/forgot-password"
+                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                        >
+                            Forgot Password?
+                        </Link>
+                    </div>
                 </form>
             </div>
         </div>

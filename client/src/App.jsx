@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import StoreFront from './pages/StoreFront';
+import ProductDetails from './pages/ProductDetails';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -18,6 +19,7 @@ function App() {
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<StoreFront />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>

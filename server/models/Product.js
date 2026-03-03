@@ -18,10 +18,9 @@ const productSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
-    image: {
-        type: String,
-        // default: '/placeholder.jpg' 
-    },
+    images: [{
+        type: String
+    }],
     colors: [{
         name: String,
         hex: String

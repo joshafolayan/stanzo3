@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { Check } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 
 const ProductCard = ({ product }) => {
@@ -8,12 +9,23 @@ const ProductCard = ({ product }) => {
     const [selectedColor, setSelectedColor] = useState(product.colors[0]);
     const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
     const [isAdded, setIsAdded] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-    // Determine image URL - fallback to placeholder if not found or using API path
-    // Determine image URL - fallback to placeholder if not found or using API path
-    const imgUrl = product.image?.startsWith('/')
-        ? product.image // Local absolute path (public folder)
-        : product.image || '';
+    const images = product.images && product.images.length > 0
+        ? product.images
+        : [product.image || '/placeholder.jpg'];
+
+    const nextImage = (e) => {
+        e.preventDefault(); // Prevent Link navigation
+        e.stopPropagation();
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const prevImage = (e) => {
+        e.preventDefault(); // Prevent Link navigation
+        e.stopPropagation();
+        setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
 
     const handleAddToCart = () => {
         addToCart(product, selectedColor.name, selectedSize);
@@ -22,40 +34,69 @@ const ProductCard = ({ product }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="bg-gray-100 h-72 w-full relative group">
-                {/* Image */}
-                <img
-                    src={imgUrl}
-                    alt={product.name}
-                    className="h-full w-full object-cover object-center"
-                    onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                    }}
-                />
-                <div className="hidden h-full w-full bg-gradient-to-br from-indigo-500 to-purple-600 items-center justify-center text-white text-center p-4">
-                    <span className="font-bold text-xl">{product.name}</span>
-                </div>
+        <div className="group flex flex-col relative w-full cursor-pointer">
+            {/* Sale Badge overlay */}
+            <div className="absolute top-4 left-4 z-10">
+                <span className="bg-brand-black text-brand-white text-xs font-bold px-3 py-1 rounded-full tracking-wider uppercase">
+                    Sale
+                </span>
             </div>
 
-            <div className="p-6">
-                <h3 className="text-xl font-bold text-blue-900 mb-2">{product.name}</h3>
-                <p className="text-2xl font-bold text-red-500 mb-4">
-                    ₦{product.price.toLocaleString()}
-                </p>
+            <Link to={`/product/${product.id}`} className="block">
+                <div className="w-full aspect-[4/5] relative overflow-hidden bg-gray-50 mb-4 group/slider">
+                    {/* Image */}
+                    <img
+                        src={images[currentImageIndex]}
+                        alt={product.name}
+                        className="h-full w-full object-cover object-center"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                        }}
+                    />
 
-                {/* Colors */}
+                    {/* Slider Controls (only show if multiple images) */}
+                    {images.length > 1 && (
+                        <>
+                            <button
+                                onClick={prevImage}
+                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full opacity-0 group-hover/slider:opacity-100 transition-opacity hover:bg-white"
+                            >
+                                <ChevronLeft className="w-5 h-5 text-black" />
+                            </button>
+                            <button
+                                onClick={nextImage}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full opacity-0 group-hover/slider:opacity-100 transition-opacity hover:bg-white"
+                            >
+                                <ChevronRight className="w-5 h-5 text-black" />
+                            </button>
+                        </>
+                    )}
+
+                    <div className="hidden h-full w-full bg-gradient-to-br from-indigo-500 to-purple-600 items-center justify-center text-white text-center p-4">
+                        <span className="font-bold text-xl">{product.name}</span>
+                    </div>
+                </div>
+
+                <div className="flex flex-col flex-1 px-1">
+                    <h3 className="text-lg font-serif text-brand-black mb-1 leading-snug">{product.name}</h3>
+                    <p className="text-sm font-semibold text-brand-gray mb-4">
+                        <span className="line-through text-gray-400 font-normal mr-2">₦{(product.price * 1.2).toLocaleString()} NGN</span>
+                        <span className="text-brand-black">₦{product.price.toLocaleString()} NGN</span>
+                    </p>
+                </div>
+            </Link>
+
+            <div className="flex flex-col flex-1 px-1">
                 <div className="mb-4">
-                    <span className="text-sm font-semibold text-gray-500 block mb-2">Color:</span>
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-2 flex-wrap pb-1">
                         {product.colors.map((color) => (
                             <button
                                 key={color.name}
                                 onClick={() => setSelectedColor(color)}
                                 className={clsx(
-                                    "w-8 h-8 rounded-full border-2 relative transition-transform duration-200 hover:scale-110",
-                                    selectedColor.name === color.name ? "border-blue-900 ring-2 ring-blue-100" : "border-transparent"
+                                    "w-6 h-6 rounded-full border border-gray-200 relative transition-transform duration-200 hover:scale-110",
+                                    selectedColor.name === color.name ? "ring-1 ring-brand-black ring-offset-1" : ""
                                 )}
                                 style={{ backgroundColor: color.hex }}
                                 title={color.name}
@@ -70,19 +111,17 @@ const ProductCard = ({ product }) => {
                     </div>
                 </div>
 
-                {/* Sizes */}
                 <div className="mb-6">
-                    <span className="text-sm font-semibold text-gray-500 block mb-2">Size:</span>
                     <div className="flex gap-2 flex-wrap">
                         {product.sizes.map((size) => (
                             <button
                                 key={size}
                                 onClick={() => setSelectedSize(size)}
                                 className={clsx(
-                                    "px-3 py-1 rounded-md text-sm font-medium border transition-colors",
+                                    "px-3 py-1 text-xs font-medium border transition-colors",
                                     selectedSize === size
-                                        ? "bg-blue-900 text-white border-blue-900"
-                                        : "bg-white text-gray-700 border-gray-200 hover:border-blue-900"
+                                        ? "bg-brand-black text-brand-white border-brand-black"
+                                        : "bg-white text-brand-gray border-gray-200 hover:border-brand-black hover:text-brand-black"
                                 )}
                             >
                                 {size}
@@ -94,13 +133,13 @@ const ProductCard = ({ product }) => {
                 <button
                     onClick={handleAddToCart}
                     className={clsx(
-                        "w-full py-3 rounded-lg font-bold text-white transition-all duration-300",
+                        "w-full py-3 text-sm tracking-widest uppercase font-medium transition-all duration-300 border border-brand-black",
                         isAdded
-                            ? "bg-green-500 shadow-lg shadow-green-200"
-                            : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-lg"
+                            ? "bg-green-600 text-white border-green-600"
+                            : "bg-brand-black text-white hover:bg-white hover:text-brand-black"
                     )}
                 >
-                    {isAdded ? "✓ Added to Cart" : "Add to Cart"}
+                    {isAdded ? "Added" : "Add to Cart"}
                 </button>
             </div>
         </div>

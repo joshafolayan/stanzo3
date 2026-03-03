@@ -2,11 +2,11 @@ import React from 'react';
 
 const Hero = () => {
     return (
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-100">
-            <h1 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2">
-                Premium Bags & Shoes Collection
+        <div className="py-12 mb-4 text-center">
+            <h1 className="text-4xl md:text-5xl font-serif text-brand-black mb-4 tracking-wide font-normal">
+                Products
             </h1>
-            <p className="text-gray-500 text-lg">
+            <p className="text-brand-gray text-base max-w-2xl mx-auto font-light">
                 Discover quality products with multiple colors and sizes to match your style
             </p>
         </div>

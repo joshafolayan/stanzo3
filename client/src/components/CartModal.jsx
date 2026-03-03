@@ -43,9 +43,12 @@ const CartModal = ({ onCheckout }) => {
                         cart.map((item) => (
                             <div key={item.cartId} className="flex gap-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
                                 <img
-                                    src={item.image.startsWith('/') ? item.image : item.image}
+                                    src={item.images && item.images.length > 0 ? item.images[0] : (item.image || '/placeholder.jpg')}
                                     alt={item.name}
                                     className="w-20 h-20 object-cover rounded-md bg-gray-200"
+                                    onError={(e) => {
+                                        e.target.src = '/placeholder.jpg';
+                                    }}
                                 />
                                 <div className="flex-1">
                                     <h3 className="font-bold text-gray-800">{item.name}</h3>
