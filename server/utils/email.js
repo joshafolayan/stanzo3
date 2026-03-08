@@ -13,7 +13,7 @@ const sendResetEmail = async (email, resetToken) => {
         });
 
         // The reset URL points to the frontend reset page
-        const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5174'}/admin/reset-password?token=${resetToken}`;
+        const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/reset-password?token=${resetToken}`;
 
         const mailOptions = {
             from: `"Admin System" <${process.env.EMAIL_USER}>`,
