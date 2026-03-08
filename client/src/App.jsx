@@ -19,6 +19,7 @@ function App() {
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<StoreFront />} />
+            <Route path="/shop" element={<StoreFront />} />
             <Route path="/product/:id" element={<ProductDetails />} />
 
             {/* Admin Routes */}

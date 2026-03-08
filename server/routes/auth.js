@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { SECRET_KEY } = require('../middleware/auth');
+const { sendResetEmail } = require('../utils/email');
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -33,13 +34,17 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/forgot-password
 router.post('/forgot-password', async (req, res) => {
     try {
-        const { username } = req.body;
+        const { email } = req.body;
 
-        const user = await User.findOne({ username });
+        if (!email) {
+            return res.status(400).json({ message: 'Email address is required.' });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
 
         if (!user) {
             // Return success even if user not found to prevent enumeration
-            return res.json({ message: 'If a user with that username exists, a reset link has been sent.' });
+            return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
         }
 
         const resetToken = uuidv4();
@@ -48,10 +53,18 @@ router.post('/forgot-password', async (req, res) => {
 
         await user.save();
 
-        // Simulate sending email
-        console.log(`[EMAIL SIMULATION] Password reset link for user ${username}: http://localhost:5174/admin/reset-password?token=${resetToken}`);
+        // Send actual email using nodemailer
+        const emailSent = await sendResetEmail(user.email, resetToken);
 
-        res.json({ message: 'If a user with that username exists, a reset link has been sent.' });
+        if (!emailSent) {
+            // Revert token if email failed
+            user.resetToken = undefined;
+            user.resetTokenExpiry = undefined;
+            await user.save();
+            return res.status(500).json({ message: 'Failed to send reset email. Please try again later.' });
+        }
+
+        res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error generating reset link' });

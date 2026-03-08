@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail } from 'lucide-react';
 
 const ForgotPassword = () => {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -14,7 +14,7 @@ const ForgotPassword = () => {
         setMessage('');
 
         try {
-            const { data } = await axios.post('/api/auth/forgot-password', { username });
+            const { data } = await axios.post('/api/auth/forgot-password', { email });
             setMessage(data.message);
         } catch (error) {
             setMessage('An error occurred. Please try again.');
@@ -31,15 +31,12 @@ const ForgotPassword = () => {
                         <Mail size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800">Forgot Password</h1>
-                    <p className="text-gray-500 mt-2">Enter your username to receive a reset link.</p>
+                    <p className="text-gray-500 mt-2">Enter your email address to receive a reset link.</p>
                 </div>
 
                 {message ? (
                     <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg mb-6 text-center">
                         <p className="font-medium">{message}</p>
-                        <p className="text-sm mt-2 text-green-600">
-                            (Check the server console for the link in this demo)
-                        </p>
                         <Link to="/admin/login" className="block mt-4 text-blue-600 font-bold hover:underline">
                             Return to Login
                         </Link>
@@ -47,13 +44,13 @@ const ForgotPassword = () => {
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                             <input
-                                type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
-                                placeholder="Enter your username"
+                                placeholder="Enter your email address"
                                 required
                             />
                         </div>

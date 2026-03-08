@@ -12,6 +12,7 @@ const AdminProducts = () => {
         defaultValues: {
             name: '',
             price: '',
+            category: 'Bags',
             colors: [{ name: '', hex: '' }],
             sizes: []
         }
@@ -45,6 +46,7 @@ const AdminProducts = () => {
         const productPayload = {
             name: data.name,
             price: Number(data.price),
+            category: data.category,
             colors: data.colors,
             sizes: sizesArray
         };
@@ -86,12 +88,14 @@ const AdminProducts = () => {
         if (product) {
             setValue('name', product.name);
             setValue('price', product.price);
+            setValue('category', product.category || 'Bags');
             setValue('colors', product.colors);
             setValue('sizes', product.sizes.join(', ')); // Simple text edit for sizes
         } else {
             reset({
                 name: '',
                 price: '',
+                category: 'Bags',
                 colors: [{ name: '', hex: '#000000' }],
                 sizes: ''
             });
@@ -136,7 +140,10 @@ const AdminProducts = () => {
                                 <td className="p-4">
                                     <img src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.jpg'} alt={product.name} className="w-12 h-12 rounded object-cover bg-gray-200" />
                                 </td>
-                                <td className="p-4 font-medium">{product.name}</td>
+                                <td className="p-4 font-medium">
+                                    {product.name}
+                                    <div className="text-xs text-gray-500 font-normal mt-1">{product.category || 'Uncategorized'}</div>
+                                </td>
                                 <td className="p-4 text-gray-600">₦{product.price.toLocaleString()}</td>
                                 <td className="p-4 text-sm text-gray-500">
                                     {product.colors.length} colors, {product.sizes.length} sizes
@@ -170,6 +177,16 @@ const AdminProducts = () => {
                                     <label className="block text-sm font-medium mb-1">Price (₦)</label>
                                     <input type="number" {...register('price', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Category</label>
+                                <select {...register('category', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                    <option value="Bags">Bags</option>
+                                    <option value="Shoes">Shoes</option>
+                                    <option value="Accessories">Accessories</option>
+                                    <option value="Clothing">Clothing</option>
+                                </select>
                             </div>
 
                             <div>

@@ -36,8 +36,8 @@ const ProductCard = ({ product }) => {
     return (
         <div className="group flex flex-col relative w-full cursor-pointer">
             {/* Sale Badge overlay */}
-            <div className="absolute top-4 left-4 z-10">
-                <span className="bg-brand-black text-brand-white text-xs font-bold px-3 py-1 rounded-full tracking-wider uppercase">
+            <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
+                <span className="bg-brand-black text-brand-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full tracking-wider uppercase">
                     Sale
                 </span>
             </div>
@@ -78,24 +78,24 @@ const ProductCard = ({ product }) => {
                     </div>
                 </div>
 
-                <div className="flex flex-col flex-1 px-1">
-                    <h3 className="text-lg font-serif text-brand-black mb-1 leading-snug">{product.name}</h3>
-                    <p className="text-sm font-semibold text-brand-gray mb-4">
-                        <span className="line-through text-gray-400 font-normal mr-2">₦{(product.price * 1.2).toLocaleString()} NGN</span>
+                <div className="flex flex-col flex-1 px-1 mt-2">
+                    <h3 className="text-sm md:text-lg font-serif text-brand-black mb-0.5 md:mb-1 leading-tight line-clamp-2 md:line-clamp-1">{product.name}</h3>
+                    <p className="text-xs md:text-sm font-semibold text-brand-gray mb-2 md:mb-4 flex flex-wrap gap-x-1 md:gap-x-2 items-center">
+                        <span className="line-through text-gray-400 font-normal text-[10px] md:text-sm">₦{(product.price * 1.2).toLocaleString()} NGN</span>
                         <span className="text-brand-black">₦{product.price.toLocaleString()} NGN</span>
                     </p>
                 </div>
             </Link>
 
             <div className="flex flex-col flex-1 px-1">
-                <div className="mb-4">
-                    <div className="flex gap-2 flex-wrap pb-1">
+                <div className="mb-2 md:mb-4">
+                    <div className="flex gap-1 md:gap-2 flex-wrap pb-1">
                         {product.colors.map((color) => (
                             <button
                                 key={color.name}
                                 onClick={() => setSelectedColor(color)}
                                 className={clsx(
-                                    "w-6 h-6 rounded-full border border-gray-200 relative transition-transform duration-200 hover:scale-110",
+                                    "w-5 h-5 md:w-6 md:h-6 rounded-full border border-gray-200 relative transition-transform duration-200 hover:scale-110",
                                     selectedColor.name === color.name ? "ring-1 ring-brand-black ring-offset-1" : ""
                                 )}
                                 style={{ backgroundColor: color.hex }}
@@ -111,14 +111,14 @@ const ProductCard = ({ product }) => {
                     </div>
                 </div>
 
-                <div className="mb-6">
-                    <div className="flex gap-2 flex-wrap">
+                <div className="mb-3 md:mb-6">
+                    <div className="flex gap-1 md:gap-2 flex-wrap">
                         {product.sizes.map((size) => (
                             <button
                                 key={size}
                                 onClick={() => setSelectedSize(size)}
                                 className={clsx(
-                                    "px-3 py-1 text-xs font-medium border transition-colors",
+                                    "px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-medium border transition-colors",
                                     selectedSize === size
                                         ? "bg-brand-black text-brand-white border-brand-black"
                                         : "bg-white text-brand-gray border-gray-200 hover:border-brand-black hover:text-brand-black"
@@ -133,7 +133,7 @@ const ProductCard = ({ product }) => {
                 <button
                     onClick={handleAddToCart}
                     className={clsx(
-                        "w-full py-3 text-sm tracking-widest uppercase font-medium transition-all duration-300 border border-brand-black",
+                        "w-full py-2 md:py-3 text-[10px] md:text-sm tracking-wider md:tracking-widest uppercase font-medium transition-all duration-300 border border-brand-black",
                         isAdded
                             ? "bg-green-600 text-white border-green-600"
                             : "bg-brand-black text-white hover:bg-white hover:text-brand-black"

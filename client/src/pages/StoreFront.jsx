@@ -35,6 +35,14 @@ const StoreFront = () => {
     const filteredProducts = products.filter(product => {
         if (!searchQuery) return true;
         const lowerQuery = searchQuery.toLowerCase();
+
+        // Enhance category matching: check if the query matches the start of the category string
+        // Ex: `?q=shoe` will match `Shoes`
+        if (product.category && product.category.toLowerCase().includes(lowerQuery)) {
+            return true;
+        }
+
+        // Fallback to searching name or description
         return (
             product.name.toLowerCase().includes(lowerQuery) ||
             (product.description && product.description.toLowerCase().includes(lowerQuery))
