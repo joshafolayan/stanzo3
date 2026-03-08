@@ -64,7 +64,7 @@ router.post('/login', authLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
 
         if (user && (await bcrypt.compare(password, user.password))) {
             const token = jwt.sign(
