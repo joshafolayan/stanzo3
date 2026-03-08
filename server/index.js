@@ -15,6 +15,7 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 // Middleware
+app.set("trust proxy", 1); // Trust first proxy for express-rate-limit behind Render/Vercel
 app.use(cors());
 app.use(express.json()); // NOTE: express.json() MUST come BEFORE mongoSanitize()
 
