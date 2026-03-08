@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, User, X, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
 
 const Header = () => {
     const { cart, setIsCartOpen } = useCart();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -13,6 +15,9 @@ const Header = () => {
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentAnnouncement, setCurrentAnnouncement] = useState(0);
+
+    const userLink = user ? (user.role === 'admin' || user.role === 'superadmin' ? '/admin' : '/dashboard') : '/login';
+    const userLabel = user ? (user.role === 'admin' || user.role === 'superadmin' ? 'Admin Portal' : 'My Dashboard') : 'Sign In';
 
     const announcements = [
         "Welcome to our store",
@@ -102,7 +107,7 @@ const Header = () => {
                                 </button>
                             )}
 
-                            <Link to="/admin" className="hidden md:block hover:text-brand-gray transition-colors">
+                            <Link to={userLink} className="hidden md:block hover:text-brand-gray transition-colors">
                                 <User className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
 
@@ -154,8 +159,8 @@ const Header = () => {
                                     <a href="/?q=Shoes" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-gray-700 hover:text-brand-black transition-colors">Shoes</a>
                                 </div>
 
-                                <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 pt-4 border-t border-gray-100">
-                                    <User className="w-5 h-5" /> Admin Portal
+                                <Link to={userLink} onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 pt-4 border-t border-gray-100">
+                                    <User className="w-5 h-5" /> {userLabel}
                                 </Link>
                             </div>
                         </div>

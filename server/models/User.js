@@ -18,8 +18,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        default: 'admin',
-        enum: ['admin', 'superadmin']
+        default: 'user',
+        enum: ['user', 'admin', 'superadmin']
     },
     resetToken: String,
     resetTokenExpiry: Date

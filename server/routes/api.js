@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const jwt = require('jsonwebtoken');
+const { protect, SECRET_KEY } = require('../middleware/auth');
 
 // GET /api/products - Get all products
 router.get('/products', async (req, res) => {
@@ -20,6 +22,17 @@ router.post('/checkout', async (req, res) => {
 
         if (!cart || cart.length === 0) {
             return res.status(400).json({ success: false, message: 'Cart is empty' });
+        }
+
+        let userId = null;
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            try {
+                const token = req.headers.authorization.split(' ')[1];
+                const decoded = jwt.verify(token, SECRET_KEY);
+                userId = decoded.id;
+            } catch (err) {
+                // Token invalid or expired, continue as guest
+            }
         }
 
         // Verify prices and calculate total securely
@@ -51,6 +64,7 @@ router.post('/checkout', async (req, res) => {
         }
 
         const newOrder = new Order({
+            user: userId,
             items: processedItems,
             totalAmount: calculatedTotal,
             customerInfo: customerInfo || {},
@@ -69,6 +83,17 @@ router.post('/checkout', async (req, res) => {
     } catch (error) {
         console.error('Checkout error:', error);
         res.status(500).json({ success: false, message: 'Server error processing checkout' });
+    }
+});
+
+// GET /api/orders/myorders
+router.get('/orders/myorders', protect, async (req, res) => {
+    try {
+        const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        console.error('Error fetching user orders:', error);
+        res.status(500).json({ message: 'Server error fetching orders' });
     }
 });
 

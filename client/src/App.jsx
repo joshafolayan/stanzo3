@@ -12,6 +12,10 @@ import ForgotPassword from './pages/admin/ForgotPassword';
 import ResetPassword from './pages/admin/ResetPassword';
 import AdminUsers from './pages/admin/AdminUsers';
 
+import Login from './pages/Login';
+import Register from './pages/Register';
+import UserDashboard from './pages/UserDashboard';
+
 function App() {
   return (
     <BrowserRouter>
@@ -21,6 +25,11 @@ function App() {
             <Route path="/" element={<StoreFront />} />
             <Route path="/shop" element={<StoreFront />} />
             <Route path="/product/:id" element={<ProductDetails />} />
+
+            {/* Auth/User Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>

@@ -15,6 +15,50 @@ const authLimiter = rateLimit({
     message: { message: 'Too many attempts from this IP, please try again after 15 minutes' }
 });
 
+// POST /api/auth/register
+router.post('/register', authLimiter, async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+
+        if (!username || !password || !email) {
+            return res.status(400).json({ message: 'Username, email, and password are required' });
+        }
+
+        const existingUser = await User.findOne({
+            $or: [{ username }, { email: email.toLowerCase() }]
+        });
+
+        if (existingUser) {
+            return res.status(400).json({ message: 'Username or email already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({
+            username,
+            email: email.toLowerCase(),
+            password: hashedPassword,
+            role: 'user' // Explicitly set role to user
+        });
+
+        const savedUser = await newUser.save();
+
+        const token = jwt.sign(
+            { id: savedUser._id, username: savedUser.username, role: savedUser.role },
+            SECRET_KEY,
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            token,
+            user: { username: savedUser.username, email: savedUser.email, role: savedUser.role }
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ message: 'Server error during registration' });
+    }
+});
+
 // POST /api/auth/login
 router.post('/login', authLimiter, async (req, res) => {
     try {

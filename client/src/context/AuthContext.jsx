@@ -26,7 +26,11 @@ export const AuthProvider = ({ children }) => {
                     localStorage.removeItem('user');
                     delete axios.defaults.headers.common['Authorization'];
                     setUser(null);
-                    window.location.href = '/admin/login';
+                    if (window.location.pathname.startsWith('/admin')) {
+                        window.location.href = '/admin/login';
+                    } else {
+                        window.location.href = '/login';
+                    }
                 }
                 return Promise.reject(error);
             }
@@ -42,11 +46,27 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('user', JSON.stringify(data.user));
             axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             setUser(data.user);
-            return { success: true };
+            return { success: true, user: data.user };
         } catch (error) {
             return {
                 success: false,
                 message: error.response?.data?.message || 'Login failed'
+            };
+        }
+    };
+
+    const register = async (username, email, password) => {
+        try {
+            const { data } = await axios.post('/api/auth/register', { username, email, password });
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+            setUser(data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Registration failed'
             };
         }
     };
@@ -59,7 +79,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );
