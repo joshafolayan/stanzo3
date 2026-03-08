@@ -3,6 +3,7 @@ import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LayoutDashboard, Package, LogOut, Users, Key } from 'lucide-react';
 import clsx from 'clsx';
+import Logo from '../Logo';
 
 const AdminLayout = () => {
     const { user, loading, logout } = useAuth();
@@ -20,8 +21,10 @@ const AdminLayout = () => {
         <div className="min-h-screen bg-gray-100 flex">
             {/* Sidebar */}
             <div className="w-64 bg-slate-900 text-white flex flex-col">
-                <div className="p-6 border-b border-slate-800">
-                    <h2 className="text-xl font-bold">Admin Panel</h2>
+                <div className="p-6 border-b border-slate-800 flex items-center justify-center">
+                    <Link to="/admin">
+                        <Logo dark={true} className="scale-90" />
+                    </Link>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">

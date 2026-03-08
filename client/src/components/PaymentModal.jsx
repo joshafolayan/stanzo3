@@ -1,25 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import { useCart } from '../context/CartContext';
-import { X, CheckCircle, MessageCircle } from 'lucide-react';
+import { X, CheckCircle, MessageCircle, Loader2 } from 'lucide-react';
 
 const PaymentModal = ({ isOpen, onClose }) => {
-    const { cart, cartTotal } = useCart();
+    const { cart, cartTotal, clearCart } = useCart();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     if (!isOpen) return null;
 
-    const handleWhatsApp = () => {
-        let message = `Hello! I've just made a payment for my order:\n\n`;
-        message += `*Order Details:*\n`;
-        cart.forEach((item, index) => {
-            message += `${index + 1}. ${item.name} - ${item.selectedColor}, Size ${item.selectedSize} - ₦${item.price.toLocaleString()}\n`;
-        });
-        message += `\n*Total Amount:* ₦${cartTotal.toLocaleString()}\n\n`;
-        message += `I've transferred the amount to your account. Please confirm receipt. Thank you!`;
+    const handleWhatsApp = async () => {
+        setIsSubmitting(true);
+        setError('');
 
-        const encodedMessage = encodeURIComponent(message);
-        const phoneNumber = '2348067117690'; // Mr Stanley
+        try {
+            // 1. Submit order to backend
+            const response = await axios.post('/api/checkout', {
+                cart: cart,
+                customerInfo: {} // Assuming guest checkout for now; can be expanded if they have a form
+            });
 
-        window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+            const orderId = response.data.orderId;
+
+            // 2. Build WhatsApp message
+            let message = `Hello! I've just made a payment for my order (ID: ${orderId}):\n\n`;
+            message += `*Order Details:*\n`;
+            cart.forEach((item, index) => {
+                message += `${index + 1}. ${item.name} - ${item.selectedColor || 'Default'}, Size ${item.selectedSize || 'Default'} - ₦${item.price.toLocaleString()}\n`;
+            });
+            message += `\n*Total Amount:* ₦${cartTotal.toLocaleString()}\n\n`;
+            message += `I've transferred the amount to your account. Please confirm receipt. Thank you!`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const phoneNumber = '2348067117690'; // Keep original phone number
+
+            // 3. Open WhatsApp and Clear cart
+            window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+            clearCart();
+            onClose();
+
+        } catch (err) {
+            console.error('Checkout error:', err);
+            setError('Failed to record order. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -45,7 +71,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                             </div>
                             <div className="flex justify-between border-b pb-2">
                                 <span className="text-gray-500">Account Name</span>
-                                <span className="font-bold">ShopEase Limited</span>
+                                <span className="font-bold">All Round Stores</span>
                             </div>
                             <div className="flex justify-between border-b pb-2">
                                 <span className="text-gray-500">Account Number</span>
@@ -68,12 +94,19 @@ const PaymentModal = ({ isOpen, onClose }) => {
                         </div>
                     </div>
 
+                    {error && (
+                        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">
+                            {error}
+                        </div>
+                    )}
+
                     <button
                         onClick={handleWhatsApp}
-                        className="w-full py-4 bg-[#25D366] hover:bg-[#1fb855] text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+                        disabled={isSubmitting}
+                        className="w-full py-4 bg-[#25D366] hover:bg-[#1fb855] disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
                     >
-                        <MessageCircle className="w-6 h-6" />
-                        Chat on WhatsApp
+                        {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <MessageCircle className="w-6 h-6" />}
+                        {isSubmitting ? 'Recording Order...' : 'Chat on WhatsApp'}
                     </button>
                 </div>
             </div>

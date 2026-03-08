@@ -6,6 +6,7 @@ import Hero from '../components/Hero';
 import ProductGrid from '../components/ProductGrid';
 import CartModal from '../components/CartModal';
 import PaymentModal from '../components/PaymentModal';
+import Logo from '../components/Logo';
 
 const StoreFront = () => {
     const [products, setProducts] = useState([]);
@@ -75,8 +76,13 @@ const StoreFront = () => {
             <footer className="bg-brand-charcoal text-white mt-16 pt-16 pb-8 border-t border-brand-charcoal">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-                        <div className="lg:col-span-2">
-                            {/* Empty to match the sparse look, maybe for logo later */}
+                        <div className="lg:col-span-2 flex flex-col items-start pr-8">
+                            <div className="mb-6">
+                                <Logo dark={true} />
+                            </div>
+                            <p className="text-sm font-light text-gray-400 leading-relaxed max-w-sm">
+                                Your one-stop destination for everything you need. Quality products and exceptional service, all around.
+                            </p>
                         </div>
                         <div>
                             <h4 className="text-lg font-serif mb-6 tracking-wide">Quick links</h4>
@@ -112,7 +118,7 @@ const StoreFront = () => {
                     </div>
 
                     <div className="text-center text-xs font-light text-gray-400 border-t border-gray-800 pt-8 flex flex-wrap justify-center gap-2">
-                        <span>© {new Date().getFullYear()}, Stanzo3 Collection</span>
+                        <span>© {new Date().getFullYear()}, All Round Stores</span>
                         <span>·</span>
                         <a href="#" className="hover:text-white transition-colors">Privacy policy</a>
                         <span>·</span>

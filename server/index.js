@@ -1,6 +1,7 @@
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
+const helmet = require('helmet');
 const connectDB = require('./config/db');
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
@@ -15,7 +16,12 @@ connectDB();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // NOTE: express.json() MUST come BEFORE mongoSanitize()
+
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Routes
 app.use('/api', apiRoutes);

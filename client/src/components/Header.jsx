@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, User, X, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import Logo from './Logo';
 
 const Header = () => {
     const { cart, setIsCartOpen } = useCart();
@@ -73,8 +74,10 @@ const Header = () => {
                         </div>
 
                         {/* Logo */}
-                        <div className="text-2xl md:text-3xl font-serif text-center flex-1 flex justify-center tracking-widest uppercase">
-                            <a href="/">Stanzo3</a>
+                        <div className="flex-1 flex justify-center">
+                            <Link to="/">
+                                <Logo />
+                            </Link>
                         </div>
 
                         {/* Right Icons */}
