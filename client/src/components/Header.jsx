@@ -49,14 +49,14 @@ const Header = () => {
         <>
             <header className="fixed top-0 left-0 right-0 z-50 bg-brand-white border-b border-gray-100">
                 {/* Announcement Bar Slider */}
-                <div className="bg-brand-black text-brand-white text-[10px] md:text-xs py-2 text-center tracking-wide font-light relative h-8 md:h-9 flex items-center justify-center">
-                    <button onClick={prevAnnouncement} className="absolute left-2 md:left-4 p-1 hover:text-gray-300">
+                <div className="bg-brand-black text-brand-white text-[10px] md:text-xs py-2 text-center tracking-wide font-light relative h-8 md:h-9 flex items-center justify-center z-50">
+                    <button onClick={prevAnnouncement} className="absolute left-2 md:left-4 p-1 hover:text-gray-300 z-10">
                         <ChevronLeft className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
-                    <div className="overflow-hidden w-full max-w-2xl px-8">
+                    <div className="overflow-hidden w-[80%] max-w-2xl px-2">
                         <p className="animate-fade-in truncate">{announcements[currentAnnouncement]}</p>
                     </div>
-                    <button onClick={nextAnnouncement} className="absolute right-2 md:right-4 p-1 hover:text-gray-300">
+                    <button onClick={nextAnnouncement} className="absolute right-2 md:right-4 p-1 hover:text-gray-300 z-10">
                         <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
                 </div>
@@ -107,9 +107,17 @@ const Header = () => {
                                 </button>
                             )}
 
-                            <Link to={userLink} className="hidden md:block hover:text-brand-gray transition-colors">
-                                <User className="w-5 h-5" strokeWidth={1.5} />
-                            </Link>
+                            {user ? (
+                                <Link to={userLink} className="hidden md:flex items-center gap-1 hover:text-brand-gray transition-colors">
+                                    <User className="w-5 h-5" strokeWidth={1.5} />
+                                </Link>
+                            ) : (
+                                <div className="hidden md:flex items-center gap-2 text-sm">
+                                    <Link to="/login" className="hover:text-brand-gray transition-colors">Sign In</Link>
+                                    <span className="text-gray-300">/</span>
+                                    <Link to="/register" className="hover:text-brand-gray transition-colors">Register</Link>
+                                </div>
+                            )}
 
                             <button
                                 onClick={() => setIsCartOpen(true)}

@@ -8,6 +8,13 @@ const AdminProducts = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
 
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const getImageUrl = (path) => {
+        if (!path) return '/placeholder.jpg';
+        if (path.startsWith('http') || path.startsWith('data:')) return path;
+        return `${backendUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+    };
+
     const { register, control, handleSubmit, reset, setValue, watch } = useForm({
         defaultValues: {
             name: '',
@@ -138,7 +145,7 @@ const AdminProducts = () => {
                         {products.map(product => (
                             <tr key={product.id} className="hover:bg-gray-50">
                                 <td className="p-4">
-                                    <img src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.jpg'} alt={product.name} className="w-12 h-12 rounded object-cover bg-gray-200" />
+                                    <img src={product.images && product.images.length > 0 ? getImageUrl(product.images[0]) : '/placeholder.jpg'} alt={product.name} className="w-12 h-12 rounded object-cover bg-gray-200" />
                                 </td>
                                 <td className="p-4 font-medium">
                                     {product.name}

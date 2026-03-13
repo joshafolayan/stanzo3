@@ -49,7 +49,7 @@ const AdminUsers = () => {
 
         try {
             await axios.delete(`/api/admin/users/${id}`);
-            setUsers(users.filter(user => user.id !== id));
+            setUsers(users.filter(user => user._id !== id));
         } catch (error) {
             setError(error.response?.data?.message || 'Failed to delete user');
         }
@@ -86,7 +86,7 @@ const AdminUsers = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {users.map((user) => (
-                                    <tr key={user.id} className="hover:bg-gray-50">
+                                    <tr key={user._id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
@@ -105,7 +105,7 @@ const AdminUsers = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <button
-                                                onClick={() => handleDeleteUser(user.id)}
+                                                onClick={() => handleDeleteUser(user._id)}
                                                 disabled={user.username === currentUser?.username}
                                                 className={`p-2 rounded-lg transition-colors ${user.username === currentUser?.username
                                                     ? 'text-gray-300 cursor-not-allowed'

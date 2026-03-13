@@ -4,15 +4,12 @@ import axios from 'axios';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import ProductGrid from '../components/ProductGrid';
-import CartModal from '../components/CartModal';
-import PaymentModal from '../components/PaymentModal';
 import Logo from '../components/Logo';
 
 const StoreFront = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
     const [searchParams] = useSearchParams();
     const searchQuery = searchParams.get('q') || '';
@@ -68,10 +65,6 @@ const StoreFront = () => {
 
                 <ProductGrid products={filteredProducts} loading={loading} error={error} />
             </main>
-
-            {/* Modals */}
-            <CartModal onCheckout={() => setIsPaymentOpen(true)} />
-            <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} />
 
             <footer className="bg-brand-charcoal text-white mt-16 pt-16 pb-8 border-t border-brand-charcoal">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

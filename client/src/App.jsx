@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import StoreFront from './pages/StoreFront';
 import ProductDetails from './pages/ProductDetails';
@@ -15,8 +15,13 @@ import AdminUsers from './pages/admin/AdminUsers';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import UserDashboard from './pages/UserDashboard';
+import AdminOrders from './pages/admin/AdminOrders';
+import CartModal from './components/CartModal';
+import PaymentModal from './components/PaymentModal';
 
 function App() {
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -35,6 +40,7 @@ function App() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="products" element={<AdminProducts />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="orders" element={<AdminOrders />} />
               {/* Make products default for /admin */}
               <Route index element={<AdminProducts />} />
             </Route>
@@ -43,6 +49,8 @@ function App() {
             <Route path="/admin/forgot-password" element={<ForgotPassword />} />
             <Route path="/admin/reset-password" element={<ResetPassword />} />
           </Routes>
+          <CartModal onCheckout={() => setIsPaymentOpen(true)} />
+          <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} />
         </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>

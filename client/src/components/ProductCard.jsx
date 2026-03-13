@@ -11,9 +11,16 @@ const ProductCard = ({ product }) => {
     const [isAdded, setIsAdded] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const getImageUrl = (path) => {
+        if (!path) return '/placeholder.jpg';
+        if (path.startsWith('http') || path.startsWith('data:')) return path;
+        return `${backendUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+    };
+
     const images = product.images && product.images.length > 0
-        ? product.images
-        : [product.image || '/placeholder.jpg'];
+        ? product.images.map(getImageUrl)
+        : [getImageUrl(product.image)];
 
     const nextImage = (e) => {
         e.preventDefault(); // Prevent Link navigation
