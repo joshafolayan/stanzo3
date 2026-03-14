@@ -25,6 +25,35 @@ router.get('/orders', protect, admin, async (req, res) => {
     }
 });
 
+// PUT /api/admin/orders/:id/status - Update order status
+router.put('/orders/:id/status', protect, admin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const Order = require('../models/Order');
+
+        // Simple validation
+        const validStatuses = ['pending', 'processing', 'completed', 'paid', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid status provided.' });
+        }
+
+        const updatedOrder = await Order.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        );
+
+        if (!updatedOrder) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        res.json(updatedOrder);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error updating order status' });
+    }
+});
+
 // POST /api/admin/products - Create Product
 router.post('/products', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
     try {

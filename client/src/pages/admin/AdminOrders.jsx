@@ -6,26 +6,47 @@ const AdminOrders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
     useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const config = {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                };
-                const res = await axios.get('/api/admin/orders', config);
-                setOrders(res.data);
-            } catch (err) {
-                console.error('Failed to fetch orders:', err);
-                setError('Failed to load orders.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchOrders();
     }, []);
+
+    const fetchOrders = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const config = {
+                headers: { 'Authorization': `Bearer ${token}` }
+            };
+            const res = await axios.get('/api/admin/orders', config);
+            setOrders(res.data);
+        } catch (err) {
+            console.error('Failed to fetch orders:', err);
+            setError('Failed to load orders.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleStatusChange = async (orderId, newStatus) => {
+        setUpdatingOrderId(orderId);
+        try {
+            const token = localStorage.getItem('token');
+            const config = {
+                headers: { 'Authorization': `Bearer ${token}` }
+            };
+            await axios.put(`/api/admin/orders/${orderId}/status`, { status: newStatus }, config);
+            
+            // Re-fetch to guarantee sync with DB, or optimistically update
+            await fetchOrders();
+        } catch (err) {
+            console.error('Failed to update status:', err);
+            // Optionally could add a toast here
+            alert('Failed to update order status');
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    };
 
     if (loading) {
         return (
@@ -80,15 +101,28 @@ const AdminOrders = () => {
                                             </ul>
                                         </td>
                                         <td className="p-4 font-bold text-slate-900 border-l border-r">₦{order.totalAmount?.toLocaleString()}</td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize 
-                                                ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                  order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                                  order.status === 'completed' || order.status === 'paid' ? 'bg-green-100 text-green-800' :
-                                                  'bg-slate-100 text-slate-800'}`}
-                                            >
-                                                {order.status || 'unknown'}
-                                            </span>
+                                        <td className="p-4 relative">
+                                            {updatingOrderId === order._id ? (
+                                                <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                                                    <Loader2 className="w-4 h-4 animate-spin" /> Updating...
+                                                </div>
+                                            ) : (
+                                                <select
+                                                    value={order.status || 'pending'}
+                                                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                                                    className={`appearance-none font-medium text-xs px-3 py-1.5 rounded-full border outline-none cursor-pointer pr-6 shadow-sm
+                                                        ${order.status === 'pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-200 hover:bg-yellow-100' :
+                                                        order.status === 'processing' ? 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100' :
+                                                        order.status === 'completed' || order.status === 'paid' ? 'bg-green-50 text-green-800 border-green-200 hover:bg-green-100' :
+                                                        order.status === 'cancelled' ? 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100' :
+                                                        'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'}`}
+                                                >
+                                                    <option value="pending">Pending</option>
+                                                    <option value="processing">Processing</option>
+                                                    <option value="completed">Completed</option>
+                                                    <option value="cancelled">Cancelled</option>
+                                                </select>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
