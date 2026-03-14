@@ -83,12 +83,12 @@ router.post('/checkout', async (req, res) => {
             
             // Send customer confirmation if email exists
             if (customerInfo && customerInfo.email) {
-                await sendOrderConfirmationEmail(customerInfo.email, savedOrder);
+                sendOrderConfirmationEmail(customerInfo.email, savedOrder).catch(err => console.error('Error sending customer email', err));
             }
             
             // Send admin notification
             if (adminEmails) {
-                await sendNewOrderAdminEmail(adminEmails, savedOrder);
+                sendNewOrderAdminEmail(adminEmails, savedOrder).catch(err => console.error('Error sending admin email', err));
             }
         } catch (emailErr) {
             console.error('Non-blocking error during email sending:', emailErr);

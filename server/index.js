@@ -13,6 +13,10 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Fix for Render IPv6 ENETUNREACH errors (Node 18+ defaults to ipv6first)
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 // Connect to Database
 connectDB();
 
