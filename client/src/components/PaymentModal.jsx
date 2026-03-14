@@ -36,7 +36,15 @@ const PaymentModal = ({ isOpen, onClose }) => {
             const phoneNumber = '2348067117690'; // Keep original phone number
 
             // 3. Open WhatsApp and Clear cart
-            window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+            // Instead of window.open, use window.location.href to avoid popup blockers, or open it reliably
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+            
+            // Try window.open, if blocked, fallback to href
+            const newWindow = window.open(whatsappUrl, '_blank');
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                window.location.href = whatsappUrl;
+            }
+            
             clearCart();
             onClose();
 

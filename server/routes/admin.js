@@ -13,6 +13,18 @@ router.get('/products', protect, admin, async (req, res) => {
     res.json(products);
 });
 
+// GET /api/admin/orders - Get all orders
+router.get('/orders', protect, admin, async (req, res) => {
+    try {
+        const Order = require('../models/Order'); // Local import since not at top
+        const orders = await Order.find({}).sort({ createdAt: -1 }).populate('user', 'username email');
+        res.json(orders);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error fetching orders' });
+    }
+});
+
 // POST /api/admin/products - Create Product
 router.post('/products', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
     try {
