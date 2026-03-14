@@ -7,6 +7,7 @@ const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -17,11 +18,16 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        const result = await login(username, password);
-        if (result.success) {
-            navigate(from, { replace: true });
-        } else {
-            setError(result.message);
+        setIsSubmitting(true);
+        try {
+            const result = await login(username, password);
+            if (result.success) {
+                navigate(from, { replace: true });
+            } else {
+                setError(result.message);
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -69,9 +75,10 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className="w-full py-3 bg-brand-black text-brand-white rounded-lg font-medium tracking-wide hover:bg-gray-800 transition-colors mt-2"
+                            disabled={isSubmitting}
+                            className={`w-full py-3 rounded-lg font-medium tracking-wide transition-colors mt-2 ${isSubmitting ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-brand-black text-brand-white hover:bg-gray-800'}`}
                         >
-                            Log In
+                            {isSubmitting ? 'Logging In...' : 'Log In'}
                         </button>
 
                         <div className="text-center mt-6 text-sm text-gray-600">

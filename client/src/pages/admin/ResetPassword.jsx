@@ -116,7 +116,7 @@ const ResetPassword = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-lg shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className={`w-full text-white font-bold py-3 rounded-lg transition-all duration-200 shadow-lg shadow-blue-200 flex items-center justify-center gap-2 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                         >
                             {isSubmitting ? 'Resetting...' : 'Reset Password'}
                             {!isSubmitting && <ArrowRight size={18} />}

@@ -8,6 +8,7 @@ const AdminProducts = () => {
     const [products, setProducts] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { register, control, handleSubmit, reset, setValue, watch } = useForm({
         defaultValues: {
@@ -38,6 +39,7 @@ const AdminProducts = () => {
     }, []);
 
     const onSubmit = async (data) => {
+        setIsSubmitting(true);
         const formData = new FormData();
 
         // Process sizes (convert comma separated string to array if needed, or handle array from checkboxes)
@@ -70,6 +72,8 @@ const AdminProducts = () => {
         } catch (error) {
             console.error('Error saving product', error);
             alert('Failed to save product');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -222,7 +226,13 @@ const AdminProducts = () => {
 
                             <div className="pt-4 border-t flex justify-end gap-3">
                                 <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancel</button>
-                                <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">Save Product</button>
+                                <button 
+                                    type="submit" 
+                                    disabled={isSubmitting}
+                                    className={`px-4 py-2 text-white font-bold rounded-lg transition-colors ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                >
+                                    {isSubmitting ? 'Saving...' : 'Save Product'}
+                                </button>
                             </div>
                         </form>
                     </div>

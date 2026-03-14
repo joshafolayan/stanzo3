@@ -6,17 +6,23 @@ const AdminLogin = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        const result = await login(username, password);
-        if (result.success) {
-            navigate('/admin/products');
-        } else {
-            setError(result.message);
+        setIsSubmitting(true);
+        try {
+            const result = await login(username, password);
+            if (result.success) {
+                navigate('/admin/products');
+            } else {
+                setError(result.message);
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -56,9 +62,10 @@ const AdminLogin = () => {
 
                     <button
                         type="submit"
-                        className="w-full py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors"
+                        disabled={isSubmitting}
+                        className={`w-full py-2 rounded-lg font-bold transition-colors ${isSubmitting ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                     >
-                        Login
+                        {isSubmitting ? 'Logging In...' : 'Login'}
                     </button>
 
                     <div className="text-center mt-4">

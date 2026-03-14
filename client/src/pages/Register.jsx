@@ -10,20 +10,26 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSuccess, setIsSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { register } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        const result = await register(username, email, password);
-        if (result.success) {
-            setIsSuccess(true);
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 2000);
-        } else {
-            setError(result.message);
+        setIsSubmitting(true);
+        try {
+            const result = await register(username, email, password);
+            if (result.success) {
+                setIsSuccess(true);
+                setTimeout(() => {
+                    navigate('/dashboard');
+                }, 2000);
+            } else {
+                setError(result.message);
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -88,9 +94,10 @@ const Register = () => {
 
                         <button
                             type="submit"
-                            className="w-full py-3 bg-brand-black text-brand-white rounded-lg font-medium tracking-wide hover:bg-gray-800 transition-colors mt-4"
+                            disabled={isSubmitting}
+                            className={`w-full py-3 rounded-lg font-medium tracking-wide transition-colors mt-4 ${isSubmitting ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-brand-black text-brand-white hover:bg-gray-800'}`}
                         >
-                            Create Account
+                            {isSubmitting ? 'Creating...' : 'Create Account'}
                         </button>
 
                         <div className="text-center mt-6 text-sm text-gray-600">
