@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const sendResetEmail = async (email, resetToken) => {
+const sendResetEmail = async (email, resetToken, role = 'user') => {
     try {
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
@@ -13,7 +13,7 @@ const sendResetEmail = async (email, resetToken) => {
         });
 
         // The reset URL points to the frontend reset page
-        const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/reset-password?token=${resetToken}`;
+        const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}${role === 'admin' ? '/admin' : ''}/reset-password?token=${resetToken}`;
 
         const mailOptions = {
             from: `"Admin System" <${process.env.EMAIL_USER}>`,
@@ -43,4 +43,86 @@ const sendResetEmail = async (email, resetToken) => {
     }
 };
 
-module.exports = { sendResetEmail };
+const sendOrderConfirmationEmail = async (email, order) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: process.env.EMAIL_PORT,
+            secure: process.env.EMAIL_PORT === '465',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        const mailOptions = {
+            from: `"Store System" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: `Order Confirmation - #${order._id}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2>Thank you for your order!</h2>
+                    <p>Your order <strong>#${order._id}</strong> has been received and is currently pending processing.</p>
+                    <h3>Order Summary</h3>
+                    <ul>
+                        ${order.items.map(item => `<li>${item.quantity}x ${item.name} - $${item.price}</li>`).join('')}
+                    </ul>
+                    <p><strong>Total Amount: $${order.totalAmount}</strong></p>
+                    <p>We will notify you once your order is confirmed and shipped.</p>
+                </div>
+            `,
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`[EMAIL SENT] Order confirmation email sent to ${email} (Message ID: ${info.messageId})`);
+        return true;
+    } catch (error) {
+        console.error('[EMAIL ERROR] Failed to send order confirmation email:', error);
+        return false;
+    }
+};
+
+const sendNewOrderAdminEmail = async (adminEmails, order) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: process.env.EMAIL_PORT,
+            secure: process.env.EMAIL_PORT === '465',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        const mailOptions = {
+            from: `"Store System" <${process.env.EMAIL_USER}>`,
+            to: adminEmails,
+            subject: `New Order Received - #${order._id}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2>New Order Received!</h2>
+                    <p>A new order <strong>#${order._id}</strong> has been placed.</p>
+                    <h3>Customer Information</h3>
+                    <p>Name: ${order.customerInfo?.name || 'N/A'}</p>
+                    <p>Email: ${order.customerInfo?.email || 'N/A'}</p>
+                    <p>Phone: ${order.customerInfo?.phone || 'N/A'}</p>
+                    <h3>Order Summary</h3>
+                    <ul>
+                        ${order.items.map(item => `<li>${item.quantity}x ${item.name} - $${item.price}</li>`).join('')}
+                    </ul>
+                    <p><strong>Total Amount: $${order.totalAmount}</strong></p>
+                    <p>Please log in to the admin panel to process this order.</p>
+                </div>
+            `,
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`[EMAIL SENT] New order notification sent to admins (Message ID: ${info.messageId})`);
+        return true;
+    } catch (error) {
+        console.error('[EMAIL ERROR] Failed to send new order admin email:', error);
+        return false;
+    }
+};
+
+module.exports = { sendResetEmail, sendOrderConfirmationEmail, sendNewOrderAdminEmail };

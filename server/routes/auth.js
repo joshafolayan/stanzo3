@@ -64,7 +64,9 @@ router.post('/login', authLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        const user = await User.findOne({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
+        // Escape regex special characters to prevent ReDoS
+        const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const user = await User.findOne({ username: { $regex: new RegExp(`^${escapedUsername}$`, 'i') } });
 
         if (user && (await bcrypt.compare(password, user.password))) {
             const token = jwt.sign(
@@ -105,7 +107,7 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
         await user.save();
 
         // Send actual email using nodemailer
-        const emailSent = await sendResetEmail(user.email, resetToken);
+        const emailSent = await sendResetEmail(user.email, resetToken, user.role);
 
         if (!emailSent) {
             // Revert token if email failed

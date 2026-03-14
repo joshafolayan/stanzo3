@@ -37,7 +37,13 @@ const CartModal = ({ onCheckout }) => {
                     {cart.length === 0 ? (
                         <div className="text-center py-12 text-gray-500">
                             <span className="text-6xl block mb-4">🛒</span>
-                            <p className="text-lg">Your cart is empty</p>
+                            <p className="text-lg mb-6">Your cart is empty</p>
+                            <button
+                                onClick={() => setIsCartOpen(false)}
+                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                            >
+                                Continue Shopping
+                            </button>
                         </div>
                     ) : (
                         cart.map((item) => (

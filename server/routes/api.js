@@ -4,6 +4,8 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const jwt = require('jsonwebtoken');
 const { protect, SECRET_KEY } = require('../middleware/auth');
+const User = require('../models/User');
+const { sendOrderConfirmationEmail, sendNewOrderAdminEmail } = require('../utils/email');
 
 // GET /api/products - Get all products
 router.get('/products', async (req, res) => {
@@ -72,6 +74,25 @@ router.post('/checkout', async (req, res) => {
         });
 
         const savedOrder = await newOrder.save();
+
+        // Send Email Notifications
+        try {
+            // Find admins to notify
+            const admins = await User.find({ role: 'admin' });
+            const adminEmails = admins.filter(a => a.email).map(a => a.email).join(', ');
+            
+            // Send customer confirmation if email exists
+            if (customerInfo && customerInfo.email) {
+                await sendOrderConfirmationEmail(customerInfo.email, savedOrder);
+            }
+            
+            // Send admin notification
+            if (adminEmails) {
+                await sendNewOrderAdminEmail(adminEmails, savedOrder);
+            }
+        } catch (emailErr) {
+            console.error('Non-blocking error during email sending:', emailErr);
+        }
 
         res.json({
             success: true,
