@@ -33,7 +33,8 @@ const orderSchema = new mongoose.Schema({
         name: { type: String },
         phone: { type: String },
         email: { type: String },
-        address: { type: String }
+        address: { type: String },
+        state: { type: String }
     },
     paymentMethod: {
         type: String,

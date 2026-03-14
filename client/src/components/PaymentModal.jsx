@@ -7,6 +7,15 @@ const PaymentModal = ({ isOpen, onClose }) => {
     const { cart, cartTotal, clearCart } = useCart();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [selectedState, setSelectedState] = useState('');
+
+    const NIGERIAN_STATES = [
+        "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
+        "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT - Abuja", "Gombe",
+        "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos",
+        "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto",
+        "Taraba", "Yobe", "Zamfara"
+    ];
 
     if (!isOpen) return null;
 
@@ -18,13 +27,16 @@ const PaymentModal = ({ isOpen, onClose }) => {
             // 1. Submit order to backend
             const response = await axios.post('/api/checkout', {
                 cart: cart,
-                customerInfo: {} // Assuming guest checkout for now; can be expanded if they have a form
+                customerInfo: { state: selectedState } // Assuming guest checkout for now; can be expanded if they have a form
             });
 
             const orderId = response.data.orderId;
 
             // 2. Build WhatsApp message
             let message = `Hello! I've just made a payment for my order (ID: ${orderId}):\n\n`;
+            if (selectedState) {
+                message += `*Delivery State:* ${selectedState}\n\n`;
+            }
             message += `*Order Details:*\n`;
             cart.forEach((item, index) => {
                 message += `${index + 1}. ${item.name} - ${item.selectedColor || 'Default'}, Size ${item.selectedSize || 'Default'} - ₦${item.price.toLocaleString()}\n`;
@@ -70,6 +82,25 @@ const PaymentModal = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="p-6 space-y-6">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">
+                            Select Delivery State <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                            value={selectedState}
+                            onChange={(e) => setSelectedState(e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            required
+                        >
+                            <option value="">-- Choose a State --</option>
+                            {NIGERIAN_STATES.map((state) => (
+                                <option key={state} value={state}>
+                                    {state}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div className="bg-red-50 border-2 border-red-100 rounded-xl p-6">
                         <h3 className="text-lg font-semibold text-blue-900 mb-4">Bank Transfer Details</h3>
                         <div className="bg-white rounded-lg p-4 space-y-3 shadow-sm">
@@ -110,7 +141,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
 
                     <button
                         onClick={handleWhatsApp}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !selectedState}
                         className="w-full py-4 bg-[#25D366] hover:bg-[#1fb855] disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <MessageCircle className="w-6 h-6" />}
