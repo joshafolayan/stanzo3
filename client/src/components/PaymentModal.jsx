@@ -75,13 +75,13 @@ const PaymentModal = ({ isOpen, onClose }) => {
                 onClick={onClose}
             />
 
-            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg p-0 overflow-hidden animate-in fade-in zoom-in duration-200">
-                <div className="p-6 border-b flex justify-between items-center">
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="p-6 border-b flex justify-between items-center shrink-0">
                     <h2 className="text-xl font-bold text-blue-900">💳 Payment Details</h2>
                     <button onClick={onClose}><X className="text-gray-500 hover:text-red-500" /></button>
                 </div>
 
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 overflow-y-auto">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <label className="block text-sm font-semibold text-blue-900 mb-2">
                             Select Delivery State <span className="text-red-500">*</span>
@@ -139,14 +139,16 @@ const PaymentModal = ({ isOpen, onClose }) => {
                         </div>
                     )}
 
-                    <button
-                        onClick={handleWhatsApp}
-                        disabled={isSubmitting || !selectedState}
-                        className="w-full py-4 bg-[#25D366] hover:bg-[#1fb855] disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
-                    >
-                        {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <MessageCircle className="w-6 h-6" />}
-                        {isSubmitting ? 'Recording Order...' : 'Chat on WhatsApp'}
-                    </button>
+                    <div className="pt-2 shrink-0">
+                        <button
+                            onClick={handleWhatsApp}
+                            disabled={isSubmitting || !selectedState}
+                            className="w-full py-4 bg-[#25D366] hover:bg-[#1fb855] disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+                        >
+                            {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <MessageCircle className="w-6 h-6" />}
+                            {isSubmitting ? 'Recording Order...' : 'Chat on WhatsApp'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
