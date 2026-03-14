@@ -2,18 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Plus, Edit, Trash2, X, Upload } from 'lucide-react';
+import { getImageUrl } from '../../utils/image';
 
 const AdminProducts = () => {
     const [products, setProducts] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
-
-    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const getImageUrl = (path) => {
-        if (!path) return '/placeholder.jpg';
-        if (path.startsWith('http') || path.startsWith('data:')) return path;
-        return `${backendUrl}${path.startsWith('/') ? '' : '/'}${path}`;
-    };
 
     const { register, control, handleSubmit, reset, setValue, watch } = useForm({
         defaultValues: {

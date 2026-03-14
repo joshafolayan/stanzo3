@@ -4,54 +4,22 @@ const multer = require('multer');
 const path = require('path');
 const Product = require('../models/Product');
 const User = require('../models/User');
-const { protect } = require('../middleware/auth');
-const fs = require('fs-extra');
-
-// Storage configuration for Multer
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        // We save directly to client's public folder for simplicity in this mono-repo setup
-        // In prod, this might be S3 or a shared volume
-        const uploadPath = path.join(__dirname, '../../client/public/products');
-        fs.ensureDirSync(uploadPath); // Ensure dir exists
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const fileFilter = (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (allowedMimeTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only JPG, PNG, WEBP, and GIF images are allowed.'), false);
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
-    }
-});
+const { protect, admin } = require('../middleware/auth');
+const { uploadCloud, cloudinary } = require('../config/cloudinary');
 
 // GET /api/admin/products - Get all products (protected not strictly necessary but good practice for admin view if it had sensitive info)
-router.get('/products', protect, async (req, res) => {
+router.get('/products', protect, admin, async (req, res) => {
     const products = await Product.find({});
     res.json(products);
 });
 
 // POST /api/admin/products - Create Product
-router.post('/products', protect, upload.array('images', 5), async (req, res) => {
+router.post('/products', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
     try {
         const productData = JSON.parse(req.body.productData); // Expecting JSON string for data part
 
         if (req.files && req.files.length > 0) {
-            productData.images = req.files.map(file => '/products/' + file.filename);
+            productData.images = req.files.map(file => file.path); // Cloudinary URL
         } else if (!productData.images) {
             productData.images = [];
         }
@@ -70,15 +38,14 @@ router.post('/products', protect, upload.array('images', 5), async (req, res) =>
 });
 
 // PUT /api/admin/products/:id - Update Product
-router.put('/products/:id', protect, upload.array('images', 5), async (req, res) => {
+router.put('/products/:id', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const productData = JSON.parse(req.body.productData);
 
         if (req.files && req.files.length > 0) {
             // For simplicity, if new files are uploaded, we replace the old ones. 
-            // A more complex app might allow adding/removing specific images.
-            productData.images = req.files.map(file => '/products/' + file.filename);
+            productData.images = req.files.map(file => file.path); // Cloudinary URL
         }
 
         const updatedProduct = await Product.findOneAndUpdate(
@@ -99,16 +66,33 @@ router.put('/products/:id', protect, upload.array('images', 5), async (req, res)
 });
 
 // DELETE /api/admin/products/:id - Delete Product
-router.delete('/products/:id', protect, async (req, res) => {
+router.delete('/products/:id', protect, admin, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const result = await Product.findOneAndDelete({ id: id });
-
-        if (!result) {
+        
+        const product = await Product.findOne({ id: id });
+        if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Optional: Delete image file from FS? 
+        // Delete image file from Cloudinary 
+        if (product.images && product.images.length > 0) {
+            for (const imgUrl of product.images) {
+                // Cloudinary URL format: https://res.cloudinary.com/.../image/upload/v1234/stanzo3_products/filename.jpg
+                const urlParts = imgUrl.split('/');
+                const filename = urlParts[urlParts.length - 1];
+                const publicId = filename.split('.')[0];
+                if (publicId && imgUrl.includes('res.cloudinary.com')) {
+                    try {
+                        await cloudinary.uploader.destroy(`stanzo3_products/${publicId}`);
+                    } catch (err) {
+                        console.error('Failed to delete image from Cloudinary:', err);
+                    }
+                }
+            }
+        }
+        
+        await Product.findOneAndDelete({ id: id });
 
         res.json({ message: 'Product removed' });
     } catch (error) {
@@ -117,7 +101,7 @@ router.delete('/products/:id', protect, async (req, res) => {
 });
 
 // GET /api/admin/users - Get all users
-router.get('/users', protect, async (req, res) => {
+router.get('/users', protect, admin, async (req, res) => {
     try {
         const users = await User.find({}).select('-password');
         res.json(users);
@@ -127,7 +111,7 @@ router.get('/users', protect, async (req, res) => {
 });
 
 // POST /api/admin/users - Create User
-router.post('/users', protect, async (req, res) => {
+router.post('/users', protect, admin, async (req, res) => {
     try {
         const { username, password, role = 'admin' } = req.body;
 
@@ -155,7 +139,7 @@ router.post('/users', protect, async (req, res) => {
 });
 
 // DELETE /api/admin/users/:id - Delete User
-router.delete('/users/:id', protect, async (req, res) => {
+router.delete('/users/:id', protect, admin, async (req, res) => {
     try {
         const { id } = req.params;
 

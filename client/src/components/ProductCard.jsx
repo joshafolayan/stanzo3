@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
+import { getImageUrl } from '../utils/image';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
@@ -10,13 +11,6 @@ const ProductCard = ({ product }) => {
     const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
     const [isAdded, setIsAdded] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const getImageUrl = (path) => {
-        if (!path) return '/placeholder.jpg';
-        if (path.startsWith('http') || path.startsWith('data:')) return path;
-        return `${backendUrl}${path.startsWith('/') ? '' : '/'}${path}`;
-    };
 
     const images = product.images && product.images.length > 0
         ? product.images.map(getImageUrl)

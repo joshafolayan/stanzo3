@@ -13,7 +13,7 @@ const sendResetEmail = async (email, resetToken, role = 'user') => {
         });
 
         // The reset URL points to the frontend reset page
-        const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}${role === 'admin' ? '/admin' : ''}/reset-password?token=${resetToken}`;
+        const resetUrl = `${process.env.CLIENT_URL || 'https://allroundstores.com'}${role === 'admin' ? '/admin' : ''}/reset-password?token=${resetToken}`;
 
         const mailOptions = {
             from: `"Admin System" <${process.env.EMAIL_USER}>`,

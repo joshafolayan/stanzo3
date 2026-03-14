@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { Check, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
 import clsx from 'clsx';
 import Header from '../components/Header';
+import { getImageUrl } from '../utils/image';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -43,13 +44,6 @@ const ProductDetails = () => {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center font-serif text-2xl">Loading...</div>;
     if (!product) return <div className="min-h-screen flex items-center justify-center font-serif text-2xl">Product not found.</div>;
-
-    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const getImageUrl = (path) => {
-        if (!path) return '/placeholder.jpg';
-        if (path.startsWith('http') || path.startsWith('data:')) return path;
-        return `${backendUrl}${path.startsWith('/') ? '' : '/'}${path}`;
-    };
 
     const images = product.images && product.images.length > 0
         ? product.images.map(getImageUrl)

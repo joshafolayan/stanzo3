@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = process.env.JWT_SECRET || 'stanzo3-secret-key-change-this';
+const SECRET_KEY = process.env.JWT_SECRET || '-_B[cDnxZ%GH1wj;RPc1q#S]*b4}GEnz*PO--bZ:QHa';
 
 const protect = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
@@ -18,4 +18,12 @@ const protect = (req, res, next) => {
     }
 };
 
-module.exports = { protect, SECRET_KEY };
+const admin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ message: 'Not authorized as an admin' });
+    }
+};
+
+module.exports = { protect, admin, SECRET_KEY };

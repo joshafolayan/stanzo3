@@ -2,6 +2,8 @@ const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
 const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
@@ -18,6 +20,21 @@ connectDB();
 app.set("trust proxy", 1); // Trust first proxy for express-rate-limit behind Render/Vercel
 app.use(cors());
 app.use(express.json()); // NOTE: express.json() MUST come BEFORE mongoSanitize()
+
+// Data sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// Global Rate Limiting
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Apply rate limiter to all api routes except explicitly rate limited ones
+app.use('/api', globalLimiter);
 
 app.use(helmet({
     contentSecurityPolicy: false,
