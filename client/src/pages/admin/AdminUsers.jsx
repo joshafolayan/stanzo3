@@ -58,11 +58,11 @@ const AdminUsers = () => {
     if (loading) return <div className="p-8 text-center text-gray-500">Loading users...</div>;
 
     return (
-        <div>
-            <div className="mb-6 flex justify-between items-center">
+        <div className="p-4 md:p-8">
+            <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-                    <p className="text-gray-500">Manage admin access to the dashboard</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">User Management</h1>
+                    <p className="text-sm md:text-base text-gray-500">Manage admin access to the dashboard</p>
                 </div>
             </div>
 
@@ -72,12 +72,13 @@ const AdminUsers = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 {/* User List */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 border-b border-gray-200">
+                        <div className="overflow-x-auto w-full">
+                            <table className="w-full text-left min-w-[500px]">
+                                <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Username</th>
                                     <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Role</th>
@@ -127,11 +128,12 @@ const AdminUsers = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
 
                 {/* Create User Form */}
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 order-1 lg:order-2">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
                         <div className="flex items-center gap-2 mb-4 text-gray-800">
                             <UserPlus size={20} />

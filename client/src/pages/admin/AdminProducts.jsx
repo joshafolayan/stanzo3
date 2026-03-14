@@ -111,9 +111,9 @@ const AdminProducts = () => {
     };
 
     return (
-        <div className="p-8">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-2xl font-bold text-slate-800">Product Management</h1>
+        <div className="p-4 md:p-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
+                <h1 className="text-xl md:text-2xl font-bold text-slate-800">Product Management</h1>
                 <button
                     onClick={() => openModal()}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
@@ -125,8 +125,9 @@ const AdminProducts = () => {
 
             {/* Product List */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b">
+                <div className="overflow-x-auto w-full">
+                    <table className="w-full text-left min-w-[800px]">
+                        <thead className="bg-gray-50 border-b">
                         <tr>
                             <th className="p-4 font-semibold text-gray-600">Image</th>
                             <th className="p-4 font-semibold text-gray-600">Name</th>
@@ -157,6 +158,7 @@ const AdminProducts = () => {
                         ))}
                     </tbody>
                 </table>
+                </div>
             </div>
 
             {/* Modal */}
