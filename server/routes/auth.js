@@ -46,7 +46,7 @@ router.post('/register', authLimiter, async (req, res) => {
         const token = jwt.sign(
             { id: savedUser._id, username: savedUser.username, role: savedUser.role },
             SECRET_KEY,
-            { expiresIn: '24h' }
+            { expiresIn: '1h' }
         );
 
         res.status(201).json({
@@ -72,7 +72,7 @@ router.post('/login', authLimiter, async (req, res) => {
             const token = jwt.sign(
                 { id: user._id, username: user.username, role: user.role },
                 SECRET_KEY,
-                { expiresIn: '24h' }
+                { expiresIn: '1h' }
             );
             res.json({ token, user: { username: user.username, role: user.role } });
         } else {
