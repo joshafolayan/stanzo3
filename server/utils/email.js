@@ -1,22 +1,24 @@
 const nodemailer = require('nodemailer');
 
+// Initialize Nodemailer transporter with Zoho SMTP settings
+const transporter = nodemailer.createTransport({
+    host: 'smtp.zoho.com',
+    port: 465,
+    secure: true, // true for 465, false for other ports
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+const SENDER_EMAIL = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+
 const sendResetEmail = async (email, resetToken, role = 'user') => {
     try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        // The reset URL points to the frontend reset page
         const resetUrl = `${process.env.CLIENT_URL || 'https://allroundstores.com'}${role === 'admin' ? '/admin' : ''}/reset-password?token=${resetToken}`;
 
-        const mailOptions = {
-            from: `"Admin System" <${process.env.EMAIL_USER}>`,
+        const info = await transporter.sendMail({
+            from: `"Admin System" <${SENDER_EMAIL}>`,
             to: email,
             subject: 'Password Reset Request',
             html: `
@@ -32,9 +34,8 @@ const sendResetEmail = async (email, resetToken, role = 'user') => {
                     <p>If you did not request this, please ignore this email.</p>
                 </div>
             `,
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
         console.log(`[EMAIL SENT] Password reset email sent to ${email} (Message ID: ${info.messageId})`);
         return true;
     } catch (error) {
@@ -45,18 +46,8 @@ const sendResetEmail = async (email, resetToken, role = 'user') => {
 
 const sendOrderConfirmationEmail = async (email, order) => {
     try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            secure: process.env.EMAIL_PORT === '465',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        const mailOptions = {
-            from: `"Store System" <${process.env.EMAIL_USER}>`,
+        const info = await transporter.sendMail({
+            from: `"Store System" <${SENDER_EMAIL}>`,
             to: email,
             subject: `Order Confirmation - #${order._id}`,
             html: `
@@ -71,9 +62,8 @@ const sendOrderConfirmationEmail = async (email, order) => {
                     <p>We will notify you once your order is confirmed and shipped.</p>
                 </div>
             `,
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
         console.log(`[EMAIL SENT] Order confirmation email sent to ${email} (Message ID: ${info.messageId})`);
         return true;
     } catch (error) {
@@ -84,18 +74,8 @@ const sendOrderConfirmationEmail = async (email, order) => {
 
 const sendNewOrderAdminEmail = async (adminEmails, order) => {
     try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            secure: process.env.EMAIL_PORT === '465',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        const mailOptions = {
-            from: `"Store System" <${process.env.EMAIL_USER}>`,
+        const info = await transporter.sendMail({
+            from: `"Store System" <${SENDER_EMAIL}>`,
             to: adminEmails,
             subject: `New Order Received - #${order._id}`,
             html: `
@@ -114,9 +94,8 @@ const sendNewOrderAdminEmail = async (adminEmails, order) => {
                     <p>Please log in to the admin panel to process this order.</p>
                 </div>
             `,
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
         console.log(`[EMAIL SENT] New order notification sent to admins (Message ID: ${info.messageId})`);
         return true;
     } catch (error) {
