@@ -66,7 +66,7 @@ const CartModal = ({ onCheckout }) => {
                                             ₦{item.price.toLocaleString()}
                                         </span>
                                         <button
-                                            onClick={() => removeFromCart(item.cartId)}
+                                            onClick={() => removeFromCart(item._id, item.selectedSize, item.selectedColor)}
                                             className="text-gray-400 hover:text-red-500 transition-colors"
                                         >
                                             <Trash2 className="w-5 h-5" />

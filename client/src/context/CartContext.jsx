@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const CartContext = createContext();
 
@@ -9,29 +9,52 @@ export const CartProvider = ({ children }) => {
     const [isCartOpen, setIsCartOpen] = useState(false);
 
     const addToCart = (product, color, size) => {
-        setCart(prev => [
-            ...prev,
-            { ...product, selectedColor: color, selectedSize: size, cartId: Date.now() }
-        ]);
+        setCart(prev => {
+            const existing = prev.find(
+                item => item._id === product._id && item.selectedSize === size && item.selectedColor === color
+            );
+            if (existing) {
+                return prev.map(item =>
+                    item._id === product._id && item.selectedSize === size && item.selectedColor === color
+                        ? { ...item, quantity: (item.quantity || 1) + 1 }
+                        : item
+                );
+            }
+            return [...prev, { ...product, selectedColor: color, selectedSize: size, quantity: 1 }];
+        });
     };
 
-    const removeFromCart = (cartId) => {
-        setCart(prev => prev.filter(item => item.cartId !== cartId));
+    const removeFromCart = (id, size, color) => {
+        setCart(prev => prev.filter(
+            item => !(item._id === id && item.selectedSize === size && item.selectedColor === color)
+        ));
+    };
+
+    const updateQuantity = (id, size, color, quantity) => {
+        setCart(prev => prev.map(item =>
+            item._id === id && item.selectedSize === size && item.selectedColor === color
+                ? { ...item, quantity }
+                : item
+        ));
     };
 
     const clearCart = () => setCart([]);
 
-    const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
+    const getCartTotal = () => cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+
+    const cartTotal = getCartTotal();
 
     return (
         <CartContext.Provider value={{
             cart,
             addToCart,
             removeFromCart,
+            updateQuantity,
             clearCart,
             isCartOpen,
             setIsCartOpen,
-            cartTotal
+            cartTotal,
+            getCartTotal
         }}>
             {children}
         </CartContext.Provider>

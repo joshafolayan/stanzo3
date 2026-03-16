@@ -7,7 +7,7 @@ import axios from 'axios';
 import { Package, ShoppingBag, LogOut, ChevronRight, Trash2, CreditCard } from 'lucide-react';
 
 const UserDashboard = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, loading } = useAuth();
     const { cart, removeFromCart, updateQuantity, getCartTotal } = useCart();
     const navigate = useNavigate();
 
@@ -16,7 +16,7 @@ const UserDashboard = () => {
     const [loadingOrders, setLoadingOrders] = useState(true);
 
     useEffect(() => {
-        if (!user) {
+        if (!loading && !user) {
             navigate('/login');
             return;
         }
@@ -35,13 +35,14 @@ const UserDashboard = () => {
         if (activeTab === 'orders') {
             fetchOrders();
         }
-    }, [user, activeTab, navigate]);
+    }, [user, loading, activeTab, navigate]);
 
     const handleLogout = () => {
         logout();
         navigate('/');
     };
 
+    if (loading) return null;
     if (!user) return null;
 
     return (
@@ -122,7 +123,7 @@ const UserDashboard = () => {
                                             <div key={order._id} className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
                                                 <div className="flex justify-between items-start border-b border-gray-100 pb-4 mb-4">
                                                     <div>
-                                                        <div className="text-xs text-gray-500 mb-1">Order #{order._id.substring(user._id.length - 8).toUpperCase()}</div>
+                                                        <div className="text-xs text-gray-500 mb-1">Order #{order._id.slice(-8).toUpperCase()}</div>
                                                         <div className="text-sm font-medium text-gray-900">
                                                             Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                         </div>
