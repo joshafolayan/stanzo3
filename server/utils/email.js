@@ -54,9 +54,9 @@ const sendOrderConfirmationEmail = async (email, order) => {
                 <p>Your order <strong>#${order._id}</strong> has been received and is currently pending processing.</p>
                 <h3>Order Summary</h3>
                 <ul>
-                    ${order.items.map(item => `<li>${item.quantity}x ${item.name} - $${item.price}</li>`).join('')}
+                    ${order.items.map(item => `<li>${item.quantity}x ${item.name} - ₦${item.price.toLocaleString()}</li>`).join('')}
                 </ul>
-                <p><strong>Total Amount: $${order.totalAmount}</strong></p>
+                <p><strong>Total Amount: ₦${order.totalAmount.toLocaleString()}</strong></p>
                 <p>We will notify you once your order is confirmed and shipped.</p>
             </div>
         `;
@@ -90,9 +90,9 @@ const sendNewOrderAdminEmail = async (adminEmails, order) => {
                 <p>Phone: ${order.customerInfo?.phone || 'N/A'}</p>
                 <h3>Order Summary</h3>
                 <ul>
-                    ${order.items.map(item => `<li>${item.quantity}x ${item.name} - $${item.price}</li>`).join('')}
+                    ${order.items.map(item => `<li>${item.quantity}x ${item.name} - ₦${item.price.toLocaleString()}</li>`).join('')}
                 </ul>
-                <p><strong>Total Amount: $${order.totalAmount}</strong></p>
+                <p><strong>Total Amount: ₦${order.totalAmount.toLocaleString()}</strong></p>
                 <p>Please log in to the admin panel to process this order.</p>
             </div>
         `;
