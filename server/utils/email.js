@@ -8,8 +8,8 @@ apiKey.apiKey = process.env.BREVO_API_KEY;
 
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-const SENDER_EMAIL = process.env.EMAIL_FROM || 'admin@allroundstores.com';
-const sender = { email: SENDER_EMAIL, name: "Store System" };
+const SENDER_EMAIL = process.env.EMAIL_FROM || 'support@allroundstores.com';
+const sender = { email: SENDER_EMAIL, name: "Allround Stores" };
 
 const sendResetEmail = async (email, resetToken, role = 'user') => {
     try {
@@ -72,8 +72,8 @@ const sendOrderConfirmationEmail = async (email, order) => {
 
 const sendNewOrderAdminEmail = async (adminEmails, order) => {
     try {
-        const toRecipients = Array.isArray(adminEmails) 
-            ? adminEmails.map(email => ({ email })) 
+        const toRecipients = Array.isArray(adminEmails)
+            ? adminEmails.map(email => ({ email }))
             : [{ email: adminEmails }];
 
         const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
