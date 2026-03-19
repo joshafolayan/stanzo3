@@ -129,7 +129,7 @@ const UserDashboard = () => {
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <div className="text-lg font-medium text-brand-black">₦{order.totalAmount.toLocaleString()}</div>
+                                                        <div className="text-lg font-medium text-brand-black">#{order.totalAmount.toLocaleString()}</div>
                                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider mt-1 ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :
                                                                 order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                                                                     'bg-orange-100 text-orange-800'
@@ -157,7 +157,7 @@ const UserDashboard = () => {
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <span className="text-gray-600">₦{(item.price * item.quantity).toLocaleString()}</span>
+                                                            <span className="text-gray-600">#{(item.price * item.quantity).toLocaleString()}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -225,7 +225,7 @@ const UserDashboard = () => {
                                                     </div>
 
                                                     <div className="text-right">
-                                                        <p className="text-sm font-medium text-gray-900">₦{((item.price) * (item.quantity || 1)).toLocaleString()}</p>
+                                                        <p className="text-sm font-medium text-gray-900">#{((item.price) * (item.quantity || 1)).toLocaleString()}</p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -234,7 +234,7 @@ const UserDashboard = () => {
                                         <div className="bg-gray-50 p-5 rounded-lg border border-gray-100 flex flex-col items-end">
                                             <div className="flex justify-between w-full max-w-xs mb-4">
                                                 <span className="text-gray-600">Subtotal</span>
-                                                <span className="font-medium text-brand-black">₦{getCartTotal().toLocaleString()}</span>
+                                                <span className="font-medium text-brand-black">#{getCartTotal().toLocaleString()}</span>
                                             </div>
                                             <button
                                                 className="w-full max-w-xs py-3 bg-brand-black text-brand-white rounded-lg font-medium flex justify-center items-center gap-2 hover:bg-gray-800 transition-colors"

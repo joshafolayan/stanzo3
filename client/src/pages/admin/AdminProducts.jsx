@@ -164,7 +164,7 @@ const AdminProducts = () => {
                                     {product.name}
                                     <div className="text-xs text-gray-500 font-normal mt-1">{product.category || 'Uncategorized'}</div>
                                 </td>
-                                <td className="p-4 text-gray-600">₦{product.price.toLocaleString()}</td>
+                                <td className="p-4 text-gray-600">#{product.price.toLocaleString()}</td>
                                 <td className="p-4 text-sm text-gray-500">
                                     {product.colors.length} colors, {product.sizes.length} sizes
                                 </td>
@@ -256,7 +256,7 @@ const AdminProducts = () => {
                                     <input {...register('name', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Price (₦)</label>
+                                    <label className="block text-sm font-medium mb-1">Price (#)</label>
                                     <input type="number" {...register('price', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
                                 </div>
                                 <div>

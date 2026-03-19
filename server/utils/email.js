@@ -54,9 +54,9 @@ const sendOrderConfirmationEmail = async (email, order) => {
                 <p>Your order <strong>#${order._id}</strong> has been received and is currently pending processing.</p>
                 <h3>Order Summary</h3>
                 <ul>
-                    ${order.items.map(item => `<li>${item.quantity}x ${item.name}${item.selectedColor ? ` - Color: ${item.selectedColor}` : ''}${item.selectedSize ? `, Size: ${item.selectedSize}` : ''} - ₦${item.price.toLocaleString()}</li>`).join('')}
+                    ${order.items.map(item => `<li>${item.quantity}x ${item.name}${item.selectedColor ? ` - Color: ${item.selectedColor}` : ''}${item.selectedSize ? `, Size: ${item.selectedSize}` : ''} - #${item.price.toLocaleString()}</li>`).join('')}
                 </ul>
-                <p><strong>Total Amount: ₦${order.totalAmount.toLocaleString()}</strong></p>
+                <p><strong>Total Amount: #${order.totalAmount.toLocaleString()}</strong></p>
                 <p>We will notify you once your order is confirmed and shipped.</p>
             </div>
         `;
@@ -91,9 +91,9 @@ const sendNewOrderAdminEmail = async (adminEmails, order) => {
                 <p>Delivery State: ${order.customerInfo?.state || 'N/A'}</p>
                 <h3>Order Summary</h3>
                 <ul>
-                    ${order.items.map(item => `<li>${item.quantity}x ${item.name}${item.selectedColor ? ` - Color: ${item.selectedColor}` : ''}${item.selectedSize ? `, Size: ${item.selectedSize}` : ''} - ₦${item.price.toLocaleString()}</li>`).join('')}
+                    ${order.items.map(item => `<li>${item.quantity}x ${item.name}${item.selectedColor ? ` - Color: ${item.selectedColor}` : ''}${item.selectedSize ? `, Size: ${item.selectedSize}` : ''} - #${item.price.toLocaleString()}</li>`).join('')}
                 </ul>
-                <p><strong>Total Amount: ₦${order.totalAmount.toLocaleString()}</strong></p>
+                <p><strong>Total Amount: #${order.totalAmount.toLocaleString()}</strong></p>
                 <p>Please log in to the admin panel to process this order.</p>
             </div>
         `;

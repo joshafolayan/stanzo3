@@ -105,10 +105,10 @@ const ProductCard = ({ product }) => {
                     <h3 className="text-sm md:text-lg font-serif text-brand-black mb-0.5 md:mb-1 leading-tight line-clamp-2 md:line-clamp-1">{product.name}</h3>
                     <p className="text-xs md:text-sm font-semibold text-brand-gray mb-2 md:mb-4 flex flex-wrap gap-x-1 md:gap-x-2 items-center">
                         {product.discountPercentage > 0 && (
-                            <span className="line-through text-gray-400 font-normal text-[10px] md:text-sm">₦{product.price.toLocaleString()}</span>
+                            <span className="line-through text-gray-400 font-normal text-[10px] md:text-sm">#{product.price.toLocaleString()}</span>
                         )}
                         <span className="text-brand-black">
-                            ₦{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()} NGN
+                            #{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()}
                         </span>
                     </p>
                 </div>

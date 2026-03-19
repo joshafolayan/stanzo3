@@ -120,10 +120,10 @@ const ProductDetails = () => {
 
                         <div className="text-xl mb-8">
                             {product.discountPercentage > 0 && (
-                                <span className="line-through text-gray-400 mr-3">₦{product.price.toLocaleString()}</span>
+                                <span className="line-through text-gray-400 mr-3">#{product.price.toLocaleString()}</span>
                             )}
                             <span className="font-medium text-brand-black">
-                                ₦{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()} NGN
+                                #{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()}
                             </span>
                         </div>
 
@@ -202,7 +202,7 @@ const ProductDetails = () => {
 
                         <div className="mt-8 pt-8 border-t border-gray-200">
                             <ul className="text-xs text-brand-gray space-y-2 uppercase tracking-wide">
-                                <li>✓ Free shipping on orders over ₦100,000</li>
+                                <li>✓ Free shipping on orders over #100,000</li>
                                 <li>✓ Returns accepted within 14 days</li>
                                 <li>✓ Secure checkout</li>
                             </ul>

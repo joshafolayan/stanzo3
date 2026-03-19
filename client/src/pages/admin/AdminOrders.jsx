@@ -153,7 +153,7 @@ const AdminOrders = () => {
                                                 ))}
                                             </ul>
                                         </td>
-                                        <td className="p-4 font-bold text-slate-900 border-l border-r">₦{order.totalAmount?.toLocaleString()}</td>
+                                        <td className="p-4 font-bold text-slate-900 border-l border-r">#{order.totalAmount?.toLocaleString()}</td>
                                         <td className="p-4 relative">
                                             {updatingOrderId === order._id ? (
                                                 <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
