@@ -32,7 +32,7 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
         const Order = require('../models/Order');
 
         // Simple validation
-        const validStatuses = ['pending', 'processing', 'completed', 'paid', 'cancelled'];
+        const validStatuses = ['pending', 'processing', 'delivered', 'shipped', 'paid', 'cancelled'];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ message: 'Invalid status provided.' });
         }
@@ -42,8 +42,8 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        if (existingOrder.status === 'completed') {
-            return res.status(400).json({ message: 'Cannot update an already completed order.' });
+        if (existingOrder.status === 'delivered') {
+            return res.status(400).json({ message: 'Cannot update an already delivered order.' });
         }
 
         existingOrder.status = status;

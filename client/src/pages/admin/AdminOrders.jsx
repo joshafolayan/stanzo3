@@ -163,17 +163,18 @@ const AdminOrders = () => {
                                                 <select
                                                     value={order.status || 'pending'}
                                                     onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                                                    disabled={order.status === 'completed'}
+                                                    disabled={order.status === 'delivered'}
                                                     className={`appearance-none font-medium text-xs px-3 py-1.5 rounded-full border outline-none cursor-pointer pr-6 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
                                                         ${order.status === 'pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-200 hover:bg-yellow-100' :
                                                         order.status === 'processing' ? 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100' :
-                                                        order.status === 'completed' || order.status === 'paid' ? 'bg-green-50 text-green-800 border-green-200' :
+                                                        order.status === 'delivered' || order.status === 'shipped' || order.status === 'paid' ? 'bg-green-50 text-green-800 border-green-200' :
                                                         order.status === 'cancelled' ? 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100' :
                                                         'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'}`}
                                                 >
                                                     <option value="pending">Pending</option>
                                                     <option value="processing">Processing</option>
-                                                    <option value="completed">Completed</option>
+                                                    <option value="shipped">Shipped</option>
+                                                    <option value="delivered">Delivered</option>
                                                     <option value="cancelled">Cancelled</option>
                                                 </select>
                                             )}
