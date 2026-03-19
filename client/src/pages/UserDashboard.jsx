@@ -8,7 +8,7 @@ import { Package, ShoppingBag, LogOut, ChevronRight, Trash2, CreditCard } from '
 
 const UserDashboard = () => {
     const { user, logout, loading } = useAuth();
-    const { cart, removeFromCart, updateQuantity, getCartTotal } = useCart();
+    const { cart, removeFromCart, updateQuantity, getCartTotal, setIsPaymentOpen } = useCart();
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('orders');
@@ -239,11 +239,7 @@ const UserDashboard = () => {
                                             <button
                                                 className="w-full max-w-xs py-3 bg-brand-black text-brand-white rounded-lg font-medium flex justify-center items-center gap-2 hover:bg-gray-800 transition-colors"
                                                 onClick={() => {
-                                                    // This will trigger the checkout flow via Header's Cart drawer typically,
-                                                    // but here we can just show the user a hint or open the drawer if we had access to setIsCartOpen.
-                                                    // Given setIsCartOpen is mostly in Header, clicking checkout might just redirect to '/'
-                                                    // For now, redirecting to store so they can click the floating cart
-                                                    alert('To proceed to checkout, click the cart icon in the top right!');
+                                                    setIsPaymentOpen(true);
                                                 }}
                                             >
                                                 <CreditCard className="w-4 h-4" /> Proceed to Checkout

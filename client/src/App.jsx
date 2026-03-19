@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useCart } from './context/CartContext';
 import StoreFront from './pages/StoreFront';
 import ProductDetails from './pages/ProductDetails';
 import AdminLayout from './components/admin/AdminLayout';
@@ -22,7 +23,7 @@ import CartModal from './components/CartModal';
 import PaymentModal from './components/PaymentModal';
 
 function App() {
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const { isPaymentOpen, setIsPaymentOpen } = useCart();
 
   return (
     <BrowserRouter>

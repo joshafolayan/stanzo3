@@ -7,6 +7,7 @@ export const useCart = () => useContext(CartContext);
 export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
     const addToCart = (product, color, size) => {
         const finalPrice = product.discountPercentage 
@@ -52,6 +53,8 @@ export const CartProvider = ({ children }) => {
             clearCart,
             isCartOpen,
             setIsCartOpen,
+            isPaymentOpen,
+            setIsPaymentOpen,
             cartTotal,
             getCartTotal
         }}>

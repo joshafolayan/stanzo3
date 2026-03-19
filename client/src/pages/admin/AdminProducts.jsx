@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Plus, Edit, Trash2, X, Upload } from 'lucide-react';
 import { getImageUrl } from '../../utils/image';
+import { getNearestColorName } from '../../utils/colors';
 
 const AdminProducts = () => {
     const [products, setProducts] = useState([]);
@@ -115,7 +116,7 @@ const AdminProducts = () => {
                 price: '',
                 discountPercentage: '',
                 category: 'Bags',
-                colors: [{ name: '', hex: '#000000' }],
+                colors: [{ name: 'Black', hex: '#000000' }],
                 sizes: ''
             });
         }
@@ -288,11 +289,19 @@ const AdminProducts = () => {
                                     {colorFields.map((field, index) => (
                                         <div key={field.id} className="flex gap-2 items-center">
                                             <input {...register(`colors.${index}.name`)} placeholder="Color Name" className="border rounded-lg p-2 flex-1" />
-                                            <input type="color" {...register(`colors.${index}.hex`)} className="h-10 w-16 border rounded cursor-pointer" />
+                                            <input 
+                                                type="color" 
+                                                {...register(`colors.${index}.hex`, {
+                                                    onChange: (e) => {
+                                                        setValue(`colors.${index}.name`, getNearestColorName(e.target.value));
+                                                    }
+                                                })} 
+                                                className="h-10 w-16 border rounded cursor-pointer" 
+                                            />
                                             <button type="button" onClick={() => removeColor(index)} className="text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
                                         </div>
                                     ))}
-                                    <button type="button" onClick={() => appendColor({ name: '', hex: '#000000' })} className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
+                                    <button type="button" onClick={() => appendColor({ name: 'Black', hex: '#000000' })} className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
                                         <Plus className="w-4 h-4" /> Add Color
                                     </button>
                                 </div>
