@@ -18,7 +18,7 @@ const authLimiter = rateLimit({
 // POST /api/auth/register
 router.post('/register', authLimiter, async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, phone } = req.body;
 
         if (!username || !password || !email) {
             return res.status(400).json({ message: 'Username, email, and password are required' });
@@ -38,6 +38,7 @@ router.post('/register', authLimiter, async (req, res) => {
             username,
             email: email.toLowerCase(),
             password: hashedPassword,
+            phone: phone ? phone.trim() : undefined,
             role: 'user' // Explicitly set role to user
         });
 
@@ -51,7 +52,7 @@ router.post('/register', authLimiter, async (req, res) => {
 
         res.status(201).json({
             token,
-            user: { username: savedUser.username, email: savedUser.email, role: savedUser.role }
+            user: { username: savedUser.username, email: savedUser.email, phone: savedUser.phone || '', role: savedUser.role }
         });
     } catch (error) {
         console.error('Registration error:', error);

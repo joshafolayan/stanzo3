@@ -39,6 +39,11 @@ const orderSchema = new mongoose.Schema({
     paymentMethod: {
         type: String,
         default: 'bank_transfer'
+    },
+    deliveryMethod: {
+        type: String,
+        enum: ['store_pickup', 'delivery'],
+        default: 'delivery'
     }
 }, {
     timestamps: true

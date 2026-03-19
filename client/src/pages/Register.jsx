@@ -7,6 +7,7 @@ import Header from '../components/Header';
 const Register = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSuccess, setIsSuccess] = useState(false);
@@ -19,7 +20,7 @@ const Register = () => {
         setError('');
         setIsSubmitting(true);
         try {
-            const result = await register(username, email, password);
+            const result = await register(username, email, password, phone);
             if (result.success) {
                 setIsSuccess(true);
                 setTimeout(() => {
@@ -76,6 +77,18 @@ const Register = () => {
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-black focus:border-brand-black outline-none transition-colors"
                                 placeholder="Enter your email"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input
+                                type="tel"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-black focus:border-brand-black outline-none transition-colors"
+                                placeholder="e.g. 08012345678"
                                 required
                             />
                         </div>

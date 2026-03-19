@@ -7,8 +7,8 @@ import { getImageUrl } from '../utils/image';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
-    const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-    const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
+    const [selectedColor, setSelectedColor] = useState(product.colors && product.colors.length > 0 ? product.colors[0] : null);
+    const [selectedSize, setSelectedSize] = useState(product.sizes && product.sizes.length > 0 ? product.sizes[0] : null);
     const [isAdded, setIsAdded] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -29,7 +29,7 @@ const ProductCard = ({ product }) => {
     };
 
     const handleAddToCart = () => {
-        addToCart(product, selectedColor.name, selectedSize);
+        addToCart(product, selectedColor ? selectedColor.name : null, selectedSize);
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000); // 2s feedback
     };

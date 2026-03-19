@@ -20,7 +20,7 @@ router.get('/products', async (req, res) => {
 // POST /api/checkout
 router.post('/checkout', async (req, res) => {
     try {
-        const { cart, customerInfo } = req.body;
+        const { cart, customerInfo, deliveryMethod } = req.body;
 
         if (!cart || cart.length === 0) {
             return res.status(400).json({ success: false, message: 'Cart is empty' });
@@ -70,7 +70,8 @@ router.post('/checkout', async (req, res) => {
             items: processedItems,
             totalAmount: calculatedTotal,
             customerInfo: customerInfo || {},
-            status: 'pending' // Awaiting bank transfer confirmation
+            deliveryMethod: deliveryMethod || 'delivery',
+            status: 'pending'
         });
 
         const savedOrder = await newOrder.save();
