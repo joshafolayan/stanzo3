@@ -16,7 +16,9 @@ const AdminLayout = () => {
     const navItems = [
         { label: 'Products', icon: Package, path: '/admin/products' },
         { label: 'Orders', icon: LayoutDashboard, path: '/admin/orders' },
-        { label: 'Users', icon: Users, path: '/admin/users' },
+        ...(user?.role === 'admin' || user?.role === 'superadmin' 
+            ? [{ label: 'Users', icon: Users, path: '/admin/users' }] 
+            : []),
     ];
 
     const closeSidebar = () => setIsSidebarOpen(false);

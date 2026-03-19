@@ -8,8 +8,10 @@ const AdminUsers = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [newUser, setNewUser] = useState({ username: '', password: '' });
+    const [newUser, setNewUser] = useState({ username: '', password: '', role: 'admin' });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         fetchUsers();
@@ -26,6 +28,14 @@ const AdminUsers = () => {
         }
     };
 
+    // Calculate pagination
+    const indexOfLast = currentPage * itemsPerPage;
+    const indexOfFirst = indexOfLast - itemsPerPage;
+    const currentUsers = users.slice(indexOfFirst, indexOfLast);
+    const totalPages = Math.ceil(users.length / itemsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
     const handleCreateUser = async (e) => {
         e.preventDefault();
         if (!newUser.username || !newUser.password) return;
@@ -36,7 +46,7 @@ const AdminUsers = () => {
         try {
             const { data } = await axios.post('/api/admin/users', newUser);
             setUsers([...users, data]);
-            setNewUser({ username: '', password: '' });
+            setNewUser({ username: '', password: '', role: 'admin' });
         } catch (error) {
             setError(error.response?.data?.message || 'Failed to create user');
         } finally {
@@ -86,7 +96,7 @@ const AdminUsers = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {users.map((user) => (
+                                {currentUsers.map((user) => (
                                     <tr key={user._id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -129,10 +139,72 @@ const AdminUsers = () => {
                             </tbody>
                         </table>
                         </div>
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200 sm:px-6">
+                                <div className="flex justify-between flex-1 sm:hidden">
+                                    <button
+                                        onClick={() => paginate(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                                    >
+                                        Previous
+                                    </button>
+                                    <button
+                                        onClick={() => paginate(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-700">
+                                            Showing <span className="font-medium">{indexOfFirst + 1}</span> to <span className="font-medium">{Math.min(indexOfLast, users.length)}</span> of <span className="font-medium">{users.length}</span> results
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <nav className="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                            <button
+                                                onClick={() => paginate(currentPage - 1)}
+                                                disabled={currentPage === 1}
+                                                className="relative inline-flex items-center px-2 py-2 text-gray-400 rounded-l-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 focus:z-20 focus:outline-offset-0"
+                                            >
+                                                <span className="sr-only">Previous</span>
+                                                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                            {[...Array(totalPages)].map((_, i) => (
+                                                <button
+                                                    key={i + 1}
+                                                    onClick={() => paginate(i + 1)}
+                                                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${currentPage === i + 1 ? 'z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600' : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'}`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+                                            <button
+                                                onClick={() => paginate(currentPage + 1)}
+                                                disabled={currentPage === totalPages}
+                                                className="relative inline-flex items-center px-2 py-2 text-gray-400 rounded-r-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 focus:z-20 focus:outline-offset-0"
+                                            >
+                                                <span className="sr-only">Next</span>
+                                                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Create User Form */}
+                {(currentUser?.role === 'admin' || currentUser?.role === 'superadmin') && (
                 <div className="lg:col-span-1 order-1 lg:order-2">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
                         <div className="flex items-center gap-2 mb-4 text-gray-800">
@@ -166,16 +238,31 @@ const AdminUsers = () => {
                                 />
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <select
+                                    value={newUser.role}
+                                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white"
+                                    required
+                                >
+                                    <option value="admin">Admin</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="salesrep">Salesrep</option>
+                                </select>
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
                                 className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                {isSubmitting ? 'Creating...' : 'Create Admin'}
+                                {isSubmitting ? 'Creating...' : 'Create User'}
                             </button>
                         </form>
                     </div>
                 </div>
+                )} 
             </div>
         </div>
     );

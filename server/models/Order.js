@@ -44,6 +44,9 @@ const orderSchema = new mongoose.Schema({
         type: String,
         enum: ['store_pickup', 'delivery'],
         default: 'delivery'
+    },
+    processedBy: {
+        type: String
     }
 }, {
     timestamps: true

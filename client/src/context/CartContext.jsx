@@ -9,32 +9,31 @@ export const CartProvider = ({ children }) => {
     const [isCartOpen, setIsCartOpen] = useState(false);
 
     const addToCart = (product, color, size) => {
+        const finalPrice = product.discountPercentage 
+            ? product.price * (1 - product.discountPercentage / 100) 
+            : product.price;
+
+        const cartId = `${product._id}-${color || 'none'}-${size || 'none'}`;
         setCart(prev => {
-            const existing = prev.find(
-                item => item._id === product._id && item.selectedSize === size && item.selectedColor === color
-            );
+            const existing = prev.find(item => item.cartId === cartId);
             if (existing) {
                 return prev.map(item =>
-                    item._id === product._id && item.selectedSize === size && item.selectedColor === color
+                    item.cartId === cartId
                         ? { ...item, quantity: (item.quantity || 1) + 1 }
                         : item
                 );
             }
-            return [...prev, { ...product, selectedColor: color, selectedSize: size, quantity: 1 }];
+            return [...prev, { ...product, cartId, price: finalPrice, originalPrice: product.price, selectedColor: color, selectedSize: size, quantity: 1 }];
         });
     };
 
-    const removeFromCart = (id, size, color) => {
-        setCart(prev => prev.filter(
-            item => !(item._id === id && item.selectedSize === size && item.selectedColor === color)
-        ));
+    const removeFromCart = (cartId) => {
+        setCart(prev => prev.filter(item => item.cartId !== cartId));
     };
 
-    const updateQuantity = (id, size, color, quantity) => {
+    const updateQuantity = (cartId, quantity) => {
         setCart(prev => prev.map(item =>
-            item._id === id && item.selectedSize === size && item.selectedColor === color
-                ? { ...item, quantity }
-                : item
+            item.cartId === cartId ? { ...item, quantity } : item
         ));
     };
 

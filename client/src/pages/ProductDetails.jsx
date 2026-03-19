@@ -119,8 +119,12 @@ const ProductDetails = () => {
                         <h1 className="text-4xl md:text-5xl font-serif text-brand-black mb-4">{product.name}</h1>
 
                         <div className="text-xl mb-8">
-                            <span className="line-through text-gray-400 mr-3">₦{(product.price * 1.2).toLocaleString()}</span>
-                            <span className="font-medium text-brand-black">₦{product.price.toLocaleString()} NGN</span>
+                            {product.discountPercentage > 0 && (
+                                <span className="line-through text-gray-400 mr-3">₦{product.price.toLocaleString()}</span>
+                            )}
+                            <span className="font-medium text-brand-black">
+                                ₦{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()} NGN
+                            </span>
                         </div>
 
                         {/* Colors */}
@@ -130,18 +134,18 @@ const ProductDetails = () => {
                                     Color: <span className="text-brand-gray font-normal">{selectedColor?.name}</span>
                                 </span>
                                 <div className="flex gap-3 flex-wrap">
-                                    {product.colors.map(color => (
+                                    {product.colors.map((color, idx) => (
                                         <button
-                                            key={color.name}
+                                            key={`${color.hex}-${color.name}-${idx}`}
                                             onClick={() => setSelectedColor(color)}
                                             className={clsx(
                                                 "w-10 h-10 rounded-full border border-gray-200 relative transition-transform hover:scale-110",
-                                                selectedColor?.name === color.name ? "ring-2 ring-brand-black ring-offset-2" : ""
+                                                selectedColor?.hex === color.hex && selectedColor?.name === color.name ? "ring-2 ring-brand-black ring-offset-2" : ""
                                             )}
                                             style={{ backgroundColor: color.hex }}
                                             title={color.name}
                                         >
-                                            {selectedColor?.name === color.name && (
+                                            {selectedColor?.hex === color.hex && selectedColor?.name === color.name && (
                                                 <span className="absolute inset-0 flex items-center justify-center">
                                                     <Check className={clsx("w-5 h-5", color.hex === '#FFFFFF' ? 'text-black' : 'text-white')} />
                                                 </span>

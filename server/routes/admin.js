@@ -37,15 +37,18 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
             return res.status(400).json({ message: 'Invalid status provided.' });
         }
 
-        const updatedOrder = await Order.findByIdAndUpdate(
-            req.params.id,
-            { status },
-            { new: true }
-        );
-
-        if (!updatedOrder) {
+        const existingOrder = await Order.findById(req.params.id);
+        if (!existingOrder) {
             return res.status(404).json({ message: 'Order not found' });
         }
+
+        if (existingOrder.status === 'completed') {
+            return res.status(400).json({ message: 'Cannot update an already completed order.' });
+        }
+
+        existingOrder.status = status;
+        existingOrder.processedBy = req.user.username;
+        const updatedOrder = await existingOrder.save();
 
         res.json(updatedOrder);
     } catch (error) {
@@ -144,7 +147,9 @@ router.delete('/products/:id', protect, admin, async (req, res) => {
 // GET /api/admin/users - Get all users
 router.get('/users', protect, admin, async (req, res) => {
     try {
-        const users = await User.find({}).select('-password');
+        const users = await User.find({
+            role: { $in: ['admin', 'manager', 'salesrep', 'superadmin'] }
+        }).select('-password');
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching users' });
@@ -154,6 +159,11 @@ router.get('/users', protect, admin, async (req, res) => {
 // POST /api/admin/users - Create User
 router.post('/users', protect, admin, async (req, res) => {
     try {
+        // Only allow admin and superadmin to create new admins/managers
+        if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+            return res.status(403).json({ message: 'Only an admin can create additional users' });
+        }
+
         const { username, password, role = 'admin' } = req.body;
 
         const userExists = await User.findOne({ username });

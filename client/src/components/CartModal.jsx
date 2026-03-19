@@ -59,14 +59,23 @@ const CartModal = ({ onCheckout }) => {
                                 <div className="flex-1">
                                     <h3 className="font-bold text-gray-800">{item.name}</h3>
                                     <p className="text-sm text-gray-500">
-                                        {item.selectedColor} | {item.selectedSize}
+                                        {item.selectedColor && <span>{item.selectedColor}</span>}
+                                        {item.selectedColor && item.selectedSize && <span> | </span>}
+                                        {item.selectedSize && <span>{item.selectedSize}</span>}
                                     </p>
                                     <div className="mt-2 flex justify-between items-center">
-                                        <span className="font-bold text-red-500">
-                                            ₦{item.price.toLocaleString()}
-                                        </span>
+                                        <div>
+                                            <span className="font-bold text-red-500">
+                                                ₦{(item.price * (item.quantity || 1)).toLocaleString()}
+                                            </span>
+                                            {item.quantity > 1 && (
+                                                <span className="text-xs text-gray-400 ml-1">
+                                                    (x{item.quantity} @ ₦{item.price.toLocaleString()} each)
+                                                </span>
+                                            )}
+                                        </div>
                                         <button
-                                            onClick={() => removeFromCart(item._id, item.selectedSize, item.selectedColor)}
+                                            onClick={() => removeFromCart(item.cartId)}
                                             className="text-gray-400 hover:text-red-500 transition-colors"
                                         >
                                             <Trash2 className="w-5 h-5" />

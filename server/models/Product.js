@@ -18,6 +18,12 @@ const productSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    discountPercentage: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0
+    },
     images: [{
         type: String
     }],

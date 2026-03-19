@@ -9,11 +9,14 @@ const AdminProducts = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const { register, control, handleSubmit, reset, setValue, watch } = useForm({
         defaultValues: {
             name: '',
             price: '',
+            discountPercentage: '',
             category: 'Bags',
             colors: [{ name: '', hex: '' }],
             sizes: []
@@ -38,6 +41,14 @@ const AdminProducts = () => {
         fetchProducts();
     }, []);
 
+    // Calculate pagination
+    const indexOfLast = currentPage * itemsPerPage;
+    const indexOfFirst = indexOfLast - itemsPerPage;
+    const currentProducts = products.slice(indexOfFirst, indexOfLast);
+    const totalPages = Math.ceil(products.length / itemsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
     const onSubmit = async (data) => {
         setIsSubmitting(true);
         const formData = new FormData();
@@ -49,6 +60,7 @@ const AdminProducts = () => {
         const productPayload = {
             name: data.name,
             price: Number(data.price),
+            discountPercentage: data.discountPercentage ? Number(data.discountPercentage) : 0,
             category: data.category,
             colors: data.colors,
             sizes: sizesArray
@@ -93,6 +105,7 @@ const AdminProducts = () => {
         if (product) {
             setValue('name', product.name);
             setValue('price', product.price);
+            setValue('discountPercentage', product.discountPercentage || '');
             setValue('category', product.category || 'Bags');
             setValue('colors', product.colors);
             setValue('sizes', product.sizes.join(', ')); // Simple text edit for sizes
@@ -100,6 +113,7 @@ const AdminProducts = () => {
             reset({
                 name: '',
                 price: '',
+                discountPercentage: '',
                 category: 'Bags',
                 colors: [{ name: '', hex: '#000000' }],
                 sizes: ''
@@ -141,7 +155,7 @@ const AdminProducts = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y">
-                        {products.map(product => (
+                        {currentProducts.map(product => (
                             <tr key={product.id} className="hover:bg-gray-50">
                                 <td className="p-4">
                                     <img src={product.images && product.images.length > 0 ? getImageUrl(product.images[0]) : '/placeholder.jpg'} alt={product.name} className="w-12 h-12 rounded object-cover bg-gray-200" />
@@ -163,6 +177,67 @@ const AdminProducts = () => {
                     </tbody>
                 </table>
                 </div>
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200 sm:px-6">
+                        <div className="flex justify-between flex-1 sm:hidden">
+                            <button
+                                onClick={() => paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => paginate(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
+                        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div>
+                                <p className="text-sm text-gray-700">
+                                    Showing <span className="font-medium">{indexOfFirst + 1}</span> to <span className="font-medium">{Math.min(indexOfLast, products.length)}</span> of <span className="font-medium">{products.length}</span> results
+                                </p>
+                            </div>
+                            <div>
+                                <nav className="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                    <button
+                                        onClick={() => paginate(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className="relative inline-flex items-center px-2 py-2 text-gray-400 rounded-l-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 focus:z-20 focus:outline-offset-0"
+                                    >
+                                        <span className="sr-only">Previous</span>
+                                        <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => paginate(i + 1)}
+                                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${currentPage === i + 1 ? 'z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600' : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'}`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => paginate(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className="relative inline-flex items-center px-2 py-2 text-gray-400 rounded-r-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 focus:z-20 focus:outline-offset-0"
+                                    >
+                                        <span className="sr-only">Next</span>
+                                        <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Modal */}
@@ -175,7 +250,7 @@ const AdminProducts = () => {
                         </div>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Product Name</label>
                                     <input {...register('name', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
@@ -183,6 +258,10 @@ const AdminProducts = () => {
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Price (₦)</label>
                                     <input type="number" {...register('price', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Discount (%)</label>
+                                    <input type="number" min="0" max="100" {...register('discountPercentage')} placeholder="e.g. 10" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
                                 </div>
                             </div>
 

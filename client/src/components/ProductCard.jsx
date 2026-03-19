@@ -7,7 +7,9 @@ import { getImageUrl } from '../utils/image';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
-    const [selectedColor, setSelectedColor] = useState(product.colors && product.colors.length > 0 ? product.colors[0] : null);
+    const [selectedColors, setSelectedColors] = useState(
+        product.colors && product.colors.length > 0 ? [product.colors[0]] : []
+    );
     const [selectedSize, setSelectedSize] = useState(product.sizes && product.sizes.length > 0 ? product.sizes[0] : null);
     const [isAdded, setIsAdded] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -28,10 +30,30 @@ const ProductCard = ({ product }) => {
         setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
+    const toggleColor = (color) => {
+        setSelectedColors(prev => {
+            const isAlreadySelected = prev.some(c => c.hex === color.hex && c.name === color.name);
+            if (isAlreadySelected) {
+                // Don't allow deselecting if it's the only one selected
+                if (prev.length === 1) return prev;
+                return prev.filter(c => !(c.hex === color.hex && c.name === color.name));
+            }
+            return [...prev, color];
+        });
+    };
+
     const handleAddToCart = () => {
-        addToCart(product, selectedColor ? selectedColor.name : null, selectedSize);
+        if (selectedColors.length === 0) {
+            // No color selected — add without color
+            addToCart(product, null, selectedSize);
+        } else {
+            // Add one cart entry per selected color
+            selectedColors.forEach(color => {
+                addToCart(product, color.name, selectedSize);
+            });
+        }
         setIsAdded(true);
-        setTimeout(() => setIsAdded(false), 2000); // 2s feedback
+        setTimeout(() => setIsAdded(false), 2000);
     };
 
     return (
@@ -82,8 +104,12 @@ const ProductCard = ({ product }) => {
                 <div className="flex flex-col flex-1 px-1 mt-2">
                     <h3 className="text-sm md:text-lg font-serif text-brand-black mb-0.5 md:mb-1 leading-tight line-clamp-2 md:line-clamp-1">{product.name}</h3>
                     <p className="text-xs md:text-sm font-semibold text-brand-gray mb-2 md:mb-4 flex flex-wrap gap-x-1 md:gap-x-2 items-center">
-                        <span className="line-through text-gray-400 font-normal text-[10px] md:text-sm">₦{(product.price * 1.2).toLocaleString()} NGN</span>
-                        <span className="text-brand-black">₦{product.price.toLocaleString()} NGN</span>
+                        {product.discountPercentage > 0 && (
+                            <span className="line-through text-gray-400 font-normal text-[10px] md:text-sm">₦{product.price.toLocaleString()}</span>
+                        )}
+                        <span className="text-brand-black">
+                            ₦{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()} NGN
+                        </span>
                     </p>
                 </div>
             </Link>
@@ -91,24 +117,27 @@ const ProductCard = ({ product }) => {
             <div className="flex flex-col flex-1 px-1">
                 <div className="mb-2 md:mb-4">
                     <div className="flex gap-1 md:gap-2 flex-wrap pb-1">
-                        {product.colors.map((color) => (
-                            <button
-                                key={color.name}
-                                onClick={() => setSelectedColor(color)}
-                                className={clsx(
-                                    "w-5 h-5 md:w-6 md:h-6 rounded-full border border-gray-200 relative transition-transform duration-200 hover:scale-110",
-                                    selectedColor.name === color.name ? "ring-1 ring-brand-black ring-offset-1" : ""
-                                )}
-                                style={{ backgroundColor: color.hex }}
-                                title={color.name}
-                            >
-                                {selectedColor.name === color.name && (
-                                    <span className="absolute inset-0 flex items-center justify-center">
-                                        <Check className={clsx("w-4 h-4", color.hex === '#FFFFFF' ? 'text-black' : 'text-white')} />
-                                    </span>
-                                )}
-                            </button>
-                        ))}
+                        {product.colors.map((color, idx) => {
+                            const isSelected = selectedColors.some(c => c.hex === color.hex && c.name === color.name);
+                            return (
+                                <button
+                                    key={`${color.hex}-${color.name}-${idx}`}
+                                    onClick={() => toggleColor(color)}
+                                    className={clsx(
+                                        "w-5 h-5 md:w-6 md:h-6 rounded-full border border-gray-200 relative transition-transform duration-200 hover:scale-110",
+                                        isSelected ? "ring-2 ring-brand-black ring-offset-1" : ""
+                                    )}
+                                    style={{ backgroundColor: color.hex }}
+                                    title={color.name}
+                                >
+                                    {isSelected && (
+                                        <span className="absolute inset-0 flex items-center justify-center">
+                                            <Check className={clsx("w-4 h-4", color.hex === '#FFFFFF' ? 'text-black' : 'text-white')} />
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
