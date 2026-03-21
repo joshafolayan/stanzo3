@@ -24,8 +24,12 @@ router.post('/register', authLimiter, async (req, res) => {
             return res.status(400).json({ message: 'Username, email, and password are required' });
         }
 
+        const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const existingUser = await User.findOne({
-            $or: [{ username }, { email: email.toLowerCase() }]
+            $or: [
+                { username: { $regex: new RegExp(`^${escapedUsername}$`, 'i') } },
+                { email: email.toLowerCase() }
+            ]
         });
 
         if (existingUser) {
@@ -66,8 +70,13 @@ router.post('/login', authLimiter, async (req, res) => {
         const { username, password } = req.body;
 
         // Escape regex special characters to prevent ReDoS
-        const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const user = await User.findOne({ username: { $regex: new RegExp(`^${escapedUsername}$`, 'i') } });
+        const escapedIdentifier = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const user = await User.findOne({
+            $or: [
+                { username: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } },
+                { email: username.toLowerCase().trim() }
+            ]
+        });
 
         if (user && (await bcrypt.compare(password, user.password))) {
             const token = jwt.sign(

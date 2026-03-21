@@ -19,6 +19,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
         name: '',
         email: '',
         phone: '',
+        password: '',
     });
 
     // Pre-fill from logged-in user details
@@ -48,12 +49,6 @@ const PaymentModal = ({ isOpen, onClose }) => {
     };
 
     const handleDeliverySelect = (method) => {
-        // If guest tries to select Delivery, redirect to login
-        if (method === 'delivery' && !user) {
-            onClose();
-            navigate('/login');
-            return;
-        }
         setDeliveryMethod(method);
         setError('');
     };
@@ -66,6 +61,10 @@ const PaymentModal = ({ isOpen, onClose }) => {
         }
         if (!customerInfo.name.trim() || !customerInfo.phone.trim()) {
             setError('Please fill in your name and phone number.');
+            return;
+        }
+        if (!user && (!customerInfo.email.trim() || !customerInfo.password.trim())) {
+            setError('Please provide an email and password to create an account.');
             return;
         }
         if (deliveryMethod === 'delivery') {
@@ -90,6 +89,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                     name: customerInfo.name.trim(),
                     email: customerInfo.email.trim(),
                     phone: customerInfo.phone.trim(),
+                    password: customerInfo.password.trim(),
                     state: deliveryMethod === 'delivery' ? selectedState : '',
                     address: deliveryMethod === 'delivery' ? address.trim() : '',
                 }
@@ -182,25 +182,8 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                 <Truck className="w-7 h-7" />
                                 <span className="text-sm font-semibold">Delivery</span>
                                 <span className="text-xs text-center leading-tight opacity-75">Deliver to my address</span>
-                                {!user && (
-                                    <span className="absolute top-2 right-2">
-                                        <LogIn className="w-3.5 h-3.5 text-gray-400" />
-                                    </span>
-                                )}
                             </button>
                         </div>
-                        {!user && (
-                            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                <LogIn className="w-3 h-3" />
-                                Delivery requires you to{' '}
-                                <button
-                                    onClick={() => { onClose(); navigate('/login'); }}
-                                    className="text-blue-600 underline font-medium"
-                                >
-                                    log in
-                                </button>
-                            </p>
-                        )}
                     </div>
 
                     {/* Step 2 — Customer Info (shown once a method is chosen) */}
@@ -226,7 +209,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs text-gray-600 mb-1">Email Address {!user && <span className="text-gray-400">(optional)</span>}</label>
+                                    <label className="block text-xs text-gray-600 mb-1">Email Address {!user ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}</label>
                                     <input
                                         type="email"
                                         name="email"
@@ -250,6 +233,20 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                         className={`w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none ${user && user.phone ? 'bg-gray-100 text-gray-600 cursor-default' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}`}
                                     />
                                 </div>
+
+                                {!user && (
+                                    <div>
+                                        <label className="block text-xs text-gray-600 mb-1">Create Password <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            value={customerInfo.password}
+                                            onChange={handleChange}
+                                            placeholder="Create a password for your account"
+                                            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Delivery-only fields */}

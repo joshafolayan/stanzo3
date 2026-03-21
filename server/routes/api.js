@@ -3,6 +3,7 @@ const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { protect, SECRET_KEY } = require('../middleware/auth');
 const User = require('../models/User');
 const { sendOrderConfirmationEmail, sendNewOrderAdminEmail } = require('../utils/email');
@@ -34,6 +35,38 @@ router.post('/checkout', async (req, res) => {
                 userId = decoded.id;
             } catch (err) {
                 // Token invalid or expired, continue as guest
+            }
+        }
+
+        // Auto-Register Guest
+        if (!userId && customerInfo && customerInfo.password && customerInfo.email && customerInfo.name) {
+            try {
+                const escapedUsername = customerInfo.name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const existingUser = await User.findOne({
+                    $or: [
+                        { username: { $regex: new RegExp(`^${escapedUsername}$`, 'i') } },
+                        { email: customerInfo.email.trim().toLowerCase() }
+                    ]
+                });
+
+                if (existingUser) {
+                    return res.status(400).json({ success: false, message: 'Account with this email or username already exists. Please log in.' });
+                }
+
+                const hashedPassword = await bcrypt.hash(customerInfo.password, 10);
+                const newUser = new User({
+                    username: customerInfo.name.trim(),
+                    email: customerInfo.email.trim().toLowerCase(),
+                    password: hashedPassword,
+                    phone: customerInfo.phone ? customerInfo.phone.trim() : undefined,
+                    role: 'user'
+                });
+
+                const savedUser = await newUser.save();
+                userId = savedUser._id;
+            } catch (err) {
+                console.error('Auto-registration error:', err);
+                return res.status(500).json({ success: false, message: 'Server error during account creation.' });
             }
         }
 
