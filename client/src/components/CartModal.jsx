@@ -4,7 +4,7 @@ import { X, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 
 const CartModal = ({ onCheckout }) => {
-    const { cart, isCartOpen, setIsCartOpen, removeFromCart, cartTotal } = useCart();
+    const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal } = useCart();
 
     if (!isCartOpen) return null;
 
@@ -63,23 +63,75 @@ const CartModal = ({ onCheckout }) => {
                                         {item.selectedColor && item.selectedSize && <span> | </span>}
                                         {item.selectedSize && <span>{item.selectedSize}</span>}
                                     </p>
-                                    <div className="mt-2 flex justify-between items-center">
-                                        <div>
-                                            <span className="font-bold text-red-500">
-                                                #{(item.price * (item.quantity || 1)).toLocaleString()}
-                                            </span>
-                                            {item.quantity > 1 && (
-                                                <span className="text-xs text-gray-400 ml-1">
-                                                    (x{item.quantity} @ #{item.price.toLocaleString()} each)
-                                                </span>
-                                            )}
+                                    <div className="mt-2 flex justify-between items-center gap-2">
+                                        {/* Quantity stepper */}
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => {
+                                                    if ((item.quantity || 1) <= 1) {
+                                                        removeFromCart(item.cartId);
+                                                    } else {
+                                                        updateQuantity(item.cartId, (item.quantity || 1) - 1);
+                                                    }
+                                                }}
+                                                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-red-50 hover:border-red-400 hover:text-red-500 transition-colors font-bold text-lg leading-none"
+                                            >
+                                                −
+                                            </button>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={item.quantity === '' ? '' : (item.quantity || 1)}
+                                                onChange={(e) => {
+                                                    const valStr = e.target.value;
+                                                    if (valStr === '') {
+                                                        // Allow temporary empty field while typing
+                                                        updateQuantity(item.cartId, '');
+                                                    } else {
+                                                        const val = parseInt(valStr, 10);
+                                                        if (val === 0) {
+                                                            removeFromCart(item.cartId);
+                                                        } else if (val > 0) {
+                                                            updateQuantity(item.cartId, val);
+                                                        }
+                                                    }
+                                                }}
+                                                onBlur={(e) => {
+                                                    // Revert back to 1 if left explicitly empty or invalid
+                                                    if (item.quantity === '' || item.quantity < 1) {
+                                                        updateQuantity(item.cartId, 1);
+                                                    }
+                                                }}
+                                                className="w-12 text-center font-semibold text-gray-800 text-sm border border-gray-300 rounded-md py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                            />
+                                            <button
+                                                onClick={() => updateQuantity(item.cartId, (item.quantity || 1) + 1)}
+                                                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-colors font-bold text-lg leading-none"
+                                            >
+                                                +
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => removeFromCart(item.cartId)}
-                                            className="text-gray-400 hover:text-red-500 transition-colors"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
+
+                                        {/* Price + remove */}
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-right">
+                                                <span className="font-bold text-red-500 text-sm">
+                                                    #{(item.price * (item.quantity || 1)).toLocaleString()}
+                                                </span>
+                                                {(item.quantity || 1) > 1 && (
+                                                    <p className="text-xs text-gray-400">
+                                                        #{item.price.toLocaleString()} each
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => removeFromCart(item.cartId)}
+                                                className="text-gray-300 hover:text-red-500 transition-colors"
+                                                title="Remove item"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -7,9 +7,7 @@ import { getImageUrl } from '../utils/image';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
-    const [selectedColors, setSelectedColors] = useState(
-        product.colors && product.colors.length > 0 ? [product.colors[0]] : []
-    );
+    const [selectedColors, setSelectedColors] = useState([]);
     const [selectedSize, setSelectedSize] = useState(product.sizes && product.sizes.length > 0 ? product.sizes[0] : null);
     const [isAdded, setIsAdded] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -34,8 +32,6 @@ const ProductCard = ({ product }) => {
         setSelectedColors(prev => {
             const isAlreadySelected = prev.some(c => c.hex === color.hex && c.name === color.name);
             if (isAlreadySelected) {
-                // Don't allow deselecting if it's the only one selected
-                if (prev.length === 1) return prev;
                 return prev.filter(c => !(c.hex === color.hex && c.name === color.name));
             }
             return [...prev, color];

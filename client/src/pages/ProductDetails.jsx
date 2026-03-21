@@ -30,7 +30,6 @@ const ProductDetails = () => {
 
                 if (foundProduct) {
                     setProduct(foundProduct);
-                    if (foundProduct.colors?.length > 0) setSelectedColor(foundProduct.colors[0]);
                     if (foundProduct.sizes?.length > 0) setSelectedSize(foundProduct.sizes[0]);
                 }
             } catch (error) {
@@ -131,7 +130,10 @@ const ProductDetails = () => {
                         {product.colors && product.colors.length > 0 && (
                             <div className="mb-8">
                                 <span className="block text-sm font-medium text-brand-black uppercase tracking-widest mb-3">
-                                    Color: <span className="text-brand-gray font-normal">{selectedColor?.name}</span>
+                                    Color:{' '}
+                                    <span className={clsx("font-normal", selectedColor ? "text-brand-gray" : "text-red-400 italic")}>
+                                        {selectedColor?.name || 'Select a colour'}
+                                    </span>
                                 </span>
                                 <div className="flex gap-3 flex-wrap">
                                     {product.colors.map((color, idx) => (
