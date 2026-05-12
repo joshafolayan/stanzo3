@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,7 +23,7 @@
             background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
             color: white;
             padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -45,13 +46,13 @@
             position: relative;
             cursor: pointer;
             padding: 0.5rem 1rem;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 8px;
             transition: all 0.3s;
         }
 
         .cart-icon:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .cart-count {
@@ -82,7 +83,7 @@
             border-radius: 12px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .hero h1 {
@@ -106,13 +107,13 @@
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .product-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
 
         .product-image {
@@ -197,7 +198,7 @@
             color: white;
             font-weight: bold;
             font-size: 1rem;
-            text-shadow: 0 0 3px rgba(0,0,0,0.5);
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
         }
 
         /* Size Selection */
@@ -258,7 +259,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -275,7 +276,7 @@
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
 
         .modal-header {
@@ -483,6 +484,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <div class="header">
@@ -534,22 +536,23 @@
                     <div class="bank-info">
                         <div class="bank-row">
                             <span class="bank-label">Bank Name:</span>
-                            <span class="bank-value">First Bank Nigeria</span>
+                            <span class="bank-value">Moniepoint MFB</span>
                         </div>
                         <div class="bank-row">
                             <span class="bank-label">Account Name:</span>
-                            <span class="bank-value">ShopEase Limited</span>
+                            <span class="bank-value">Allroundstores Limited</span>
                         </div>
                         <div class="bank-row">
                             <span class="bank-label">Account Number:</span>
-                            <span class="bank-value">0123456789</span>
+                            <span class="bank-value">6718640395</span>
                         </div>
                         <div class="bank-row">
                             <span class="bank-label">Amount:</span>
                             <span class="bank-value amount" id="totalAmount">₦0</span>
                         </div>
                     </div>
-                    <p class="payment-note">Please transfer the exact amount and click the button below after payment</p>
+                    <p class="payment-note">Please transfer the exact amount and click the button below after payment
+                    </p>
                 </div>
 
                 <div class="success-message">
@@ -631,11 +634,11 @@
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = products.map(product => `
                 <div class="product-card">
-                    ${product.imageUrl ? 
-                        `<img src="${product.imageUrl}" alt="${product.name}" class="product-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                    ${product.imageUrl ?
+                    `<img src="${product.imageUrl}" alt="${product.name}" class="product-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                          <div class="product-image-placeholder" style="display:none">${product.name}</div>` :
-                        `<div class="product-image-placeholder">${product.name}</div>`
-                    }
+                    `<div class="product-image-placeholder">${product.name}</div>`
+                }
                     <div class="product-info">
                         <div class="product-name">${product.name}</div>
                         <div class="product-price">₦${product.price.toLocaleString()}</div>
@@ -688,15 +691,15 @@
             const product = products.find(p => p.id === productId);
             const selectedColor = document.querySelector(`#colors-${productId} .color-option.selected`).dataset.color;
             const selectedSize = document.querySelector(`#sizes-${productId} .size-option.selected`).dataset.size;
-            
+
             cart.push({
                 ...product,
                 selectedColor,
                 selectedSize
             });
-            
+
             updateCartCount();
-            
+
             // Show brief animation/feedback
             const btn = event.target;
             btn.textContent = '✓ Added!';
@@ -722,25 +725,25 @@
 
         function renderCart() {
             const cartItems = document.getElementById('cartItems');
-            
+
             if (cart.length === 0) {
                 cartItems.innerHTML = '<div class="empty-cart"><p>Your cart is empty</p><p style="font-size: 3rem; margin: 1rem 0;">🛒</p></div>';
                 document.getElementById('checkoutBtn').style.display = 'none';
                 return;
             }
-            
+
             document.getElementById('checkoutBtn').style.display = 'block';
-            
+
             const total = cart.reduce((sum, item) => sum + item.price, 0);
-            
+
             cartItems.innerHTML = `
                 ${cart.map((item, index) => `
                     <div class="cart-item">
-                        ${item.imageUrl ? 
-                            `<img src="${item.imageUrl}" alt="${item.name}" class="cart-item-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                        ${item.imageUrl ?
+                    `<img src="${item.imageUrl}" alt="${item.name}" class="cart-item-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                              <div class="cart-item-placeholder" style="display:none">${item.name}</div>` :
-                            `<div class="cart-item-placeholder">${item.name}</div>`
-                        }
+                    `<div class="cart-item-placeholder">${item.name}</div>`
+                }
                         <div class="cart-item-info">
                             <div class="cart-item-name">${item.name}</div>
                             <div class="cart-item-variant">Color: ${item.selectedColor} | Size: ${item.selectedSize}</div>
@@ -759,7 +762,7 @@
         function checkout() {
             const total = cart.reduce((sum, item) => sum + item.price, 0);
             document.getElementById('totalAmount').textContent = `₦${total.toLocaleString()}`;
-            
+
             closeCart();
             document.getElementById('paymentModal').classList.add('active');
         }
@@ -770,7 +773,7 @@
 
         function sendWhatsApp() {
             const total = cart.reduce((sum, item) => sum + item.price, 0);
-            
+
             let message = `Hello! I've just made a payment for my order:\n\n`;
             message += `*Order Details:*\n`;
             cart.forEach((item, index) => {
@@ -778,12 +781,13 @@
             });
             message += `\n*Total Amount:* ₦${total.toLocaleString()}\n\n`;
             message += `I've transferred the amount to your account. Please confirm receipt. Thank you!`;
-            
+
             const encodedMessage = encodeURIComponent(message);
-            const phoneNumber = '2348012345678'; // REPLACE with actual WhatsApp business number
-            
+            const phoneNumber = '2347061663031';
+
             window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
         }
     </script>
 </body>
+
 </html>
