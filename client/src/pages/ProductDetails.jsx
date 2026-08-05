@@ -70,11 +70,19 @@ const ProductDetails = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
                     {/* Left Column: Image Gallery */}
                     <div className="space-y-4">
-                        <div className="aspect-[4/5] relative bg-gray-50 overflow-hidden group">
+                        <div className="aspect-[4/5] relative bg-gray-50 overflow-hidden group z-0 hover:z-10 product-pop-frame product-pop-soft">
+                            {/* Cropped fill at rest, cross-fades to the full
+                                uncropped shot while the frame pops out on hover */}
                             <img
                                 src={images[currentImageIndex]}
                                 alt={product.name}
-                                className="w-full h-full object-cover object-center"
+                                className="w-full h-full object-cover object-center product-pop-cover"
+                            />
+                            <img
+                                src={images[currentImageIndex]}
+                                alt=""
+                                aria-hidden="true"
+                                className="absolute inset-0 w-full h-full object-contain object-center product-pop-full"
                             />
                             {images.length > 1 && (
                                 <>

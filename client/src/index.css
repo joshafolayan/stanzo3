@@ -12,3 +12,65 @@
     font-family: 'Playfair Display', serif;
   }
 }
+
+@layer components {
+  /* Product image hover: the tile pops out of the grid while the cropped
+     (object-cover) shot cross-fades into the full, uncropped (object-contain)
+     one — then settles back on mouse-out. */
+  .product-pop-frame {
+    transform-origin: center center;
+    transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 450ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  .product-pop-cover,
+  .product-pop-full {
+    transition: opacity 400ms ease;
+  }
+
+  .product-pop-full {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Two hover targets so the frame works either nested inside a card-wide
+     `.group` (product grid) or hovered directly (product details page). */
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .product-pop-frame,
+    .product-pop-frame:hover {
+      transform: scale(1.07);
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.35);
+    }
+
+    /* Gentler pop for large images (product details), where a 7% grow would
+       overlap whatever sits below the frame. */
+    .group:hover .product-pop-frame.product-pop-soft,
+    .product-pop-frame.product-pop-soft:hover {
+      transform: scale(1.03);
+    }
+
+    .group:hover .product-pop-cover,
+    .product-pop-frame:hover .product-pop-cover {
+      opacity: 0;
+    }
+
+    .group:hover .product-pop-full,
+    .product-pop-frame:hover .product-pop-full {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .product-pop-frame,
+    .product-pop-cover,
+    .product-pop-full {
+      transition: none;
+    }
+
+    .group:hover .product-pop-frame,
+    .product-pop-frame:hover {
+      transform: none;
+    }
+  }
+}

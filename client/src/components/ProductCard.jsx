@@ -11,6 +11,7 @@ const ProductCard = ({ product }) => {
     const [selectedSize, setSelectedSize] = useState(product.sizes && product.sizes.length > 0 ? product.sizes[0] : null);
     const [isAdded, setIsAdded] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [imageFailed, setImageFailed] = useState(false);
 
     const images = product.images && product.images.length > 0
         ? product.images.map(getImageUrl)
@@ -19,12 +20,14 @@ const ProductCard = ({ product }) => {
     const nextImage = (e) => {
         e.preventDefault(); // Prevent Link navigation
         e.stopPropagation();
+        setImageFailed(false);
         setCurrentImageIndex((prev) => (prev + 1) % images.length);
     };
 
     const prevImage = (e) => {
         e.preventDefault(); // Prevent Link navigation
         e.stopPropagation();
+        setImageFailed(false);
         setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
@@ -53,26 +56,34 @@ const ProductCard = ({ product }) => {
     };
 
     return (
-        <div className="group flex flex-col relative w-full cursor-pointer">
-            {/* Sale Badge overlay */}
-            <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
-                <span className="bg-brand-black text-brand-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full tracking-wider uppercase">
-                    Sale
-                </span>
-            </div>
-
+        <div className="group flex flex-col relative w-full cursor-pointer z-0 hover:z-20">
             <Link to={`/product/${product.id}`} className="block">
-                <div className="w-full aspect-[4/5] relative overflow-hidden bg-gray-50 mb-4 group/slider">
-                    {/* Image */}
-                    <img
-                        src={images[currentImageIndex]}
-                        alt={product.name}
-                        className="h-full w-full object-cover object-center"
-                        onError={(e) => {
-                            e.target.style.display = 'none';
-                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
-                        }}
-                    />
+                <div className="w-full aspect-[4/5] relative overflow-hidden bg-gray-50 mb-4 group/slider product-pop-frame">
+                    {/* Sale Badge overlay — lives inside the frame so it pops with it */}
+                    <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
+                        <span className="bg-brand-black text-brand-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full tracking-wider uppercase">
+                            Sale
+                        </span>
+                    </div>
+
+                    {/* Image — cropped fill at rest, cross-fades to the full
+                        uncropped shot while the frame pops out on hover */}
+                    {!imageFailed && (
+                        <>
+                            <img
+                                src={images[currentImageIndex]}
+                                alt={product.name}
+                                className="h-full w-full object-cover object-center product-pop-cover"
+                                onError={() => setImageFailed(true)}
+                            />
+                            <img
+                                src={images[currentImageIndex]}
+                                alt=""
+                                aria-hidden="true"
+                                className="absolute inset-0 h-full w-full object-contain object-center product-pop-full"
+                            />
+                        </>
+                    )}
 
                     {/* Slider Controls (only show if multiple images) */}
                     {images.length > 1 && (
@@ -92,9 +103,11 @@ const ProductCard = ({ product }) => {
                         </>
                     )}
 
-                    <div className="hidden h-full w-full bg-gradient-to-br from-indigo-500 to-purple-600 items-center justify-center text-white text-center p-4">
-                        <span className="font-bold text-xl">{product.name}</span>
-                    </div>
+                    {imageFailed && (
+                        <div className="flex h-full w-full bg-gradient-to-br from-indigo-500 to-purple-600 items-center justify-center text-white text-center p-4">
+                            <span className="font-bold text-xl">{product.name}</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col flex-1 px-1 mt-2">
