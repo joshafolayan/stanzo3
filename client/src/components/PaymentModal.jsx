@@ -119,7 +119,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
             message += `I've transferred the amount to your account. Please confirm receipt. Thank you!`;
 
             const encodedMessage = encodeURIComponent(message);
-            const phoneNumber = '2348067117690';
+            const phoneNumber = '2347061663031';
             const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
             const newWindow = window.open(whatsappUrl, '_blank');
@@ -297,15 +297,15 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                 <div className="bg-white rounded-lg p-4 space-y-3 shadow-sm">
                                     <div className="flex justify-between border-b pb-2">
                                         <span className="text-gray-500">Bank Name</span>
-                                        <span className="font-bold">First Bank Nigeria</span>
+                                        <span className="font-bold">Moniepoint MFB</span>
                                     </div>
                                     <div className="flex justify-between border-b pb-2">
                                         <span className="text-gray-500">Account Name</span>
-                                        <span className="font-bold">All Round Stores</span>
+                                        <span className="font-bold">All Round Stores Limited</span>
                                     </div>
                                     <div className="flex justify-between border-b pb-2">
                                         <span className="text-gray-500">Account Number</span>
-                                        <span className="font-mono font-bold">0123456789</span>
+                                        <span className="font-mono font-bold">6718640395</span>
                                     </div>
                                     <div className="flex justify-between pt-2">
                                         <span className="text-gray-500">Amount</span>
