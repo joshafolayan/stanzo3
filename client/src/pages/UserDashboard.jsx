@@ -4,16 +4,35 @@ import { useCart } from '../context/CartContext';
 import Header from '../components/Header';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Package, ShoppingBag, LogOut, ChevronRight, Trash2, CreditCard } from 'lucide-react';
+import { Package, ShoppingBag, LogOut, ChevronRight, Trash2, CreditCard, User as UserIcon } from 'lucide-react';
 
 const UserDashboard = () => {
-    const { user, logout, loading } = useAuth();
+    const { user, logout, loading, updateProfile } = useAuth();
     const { cart, removeFromCart, updateQuantity, getCartTotal, setIsPaymentOpen } = useCart();
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('orders');
     const [orders, setOrders] = useState([]);
     const [loadingOrders, setLoadingOrders] = useState(true);
+
+    const [emailInput, setEmailInput] = useState('');
+    const [savingEmail, setSavingEmail] = useState(false);
+    const [emailMessage, setEmailMessage] = useState(null);
+
+    useEffect(() => {
+        setEmailInput(user?.email || '');
+    }, [user]);
+
+    const handleSaveEmail = async (e) => {
+        e.preventDefault();
+        setEmailMessage(null);
+        setSavingEmail(true);
+        const result = await updateProfile(emailInput.trim());
+        setSavingEmail(false);
+        setEmailMessage(result.success
+            ? { type: 'success', text: 'Email updated successfully.' }
+            : { type: 'error', text: result.message });
+    };
 
     useEffect(() => {
         if (!loading && !user) {
@@ -96,6 +115,19 @@ const UserDashboard = () => {
                                 )}
                             </span>
                             <ChevronRight className={`w-4 h-4 ${activeTab === 'cart' ? 'opacity-100' : 'opacity-0'}`} />
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab('account')}
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'account'
+                                    ? 'bg-brand-black text-brand-white'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                        >
+                            <span className="flex items-center gap-3">
+                                <UserIcon className="w-5 h-5" /> Account
+                            </span>
+                            <ChevronRight className={`w-4 h-4 ${activeTab === 'account' ? 'opacity-100' : 'opacity-0'}`} />
                         </button>
                     </div>
 
@@ -247,6 +279,45 @@ const UserDashboard = () => {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Account Tab */}
+                        {activeTab === 'account' && (
+                            <div className="animate-fade-in max-w-md">
+                                <h2 className="text-xl font-serif text-brand-black mb-2">Account</h2>
+                                <p className="text-sm text-gray-500 mb-6">
+                                    {user.email
+                                        ? 'Update the email address on your account. It\'s used to send order updates and to recover your password.'
+                                        : 'Add an email address to your account. It lets you receive order updates and recover your password if you forget it.'}
+                                </p>
+
+                                <form onSubmit={handleSaveEmail} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                        <input
+                                            type="email"
+                                            value={emailInput}
+                                            onChange={(e) => setEmailInput(e.target.value)}
+                                            placeholder="Enter your email"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-black"
+                                        />
+                                    </div>
+
+                                    {emailMessage && (
+                                        <p className={`text-sm ${emailMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                                            {emailMessage.text}
+                                        </p>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={savingEmail || emailInput.trim() === (user.email || '')}
+                                        className="px-6 py-2 bg-brand-black text-brand-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {savingEmail ? 'Saving...' : 'Save Email'}
+                                    </button>
+                                </form>
                             </div>
                         )}
 

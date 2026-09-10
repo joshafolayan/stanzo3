@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
-const { SECRET_KEY } = require('../middleware/auth');
+const { SECRET_KEY, protect } = require('../middleware/auth');
 const { sendResetEmail } = require('../utils/email');
 
 const { v4: uuidv4 } = require('uuid');
@@ -20,17 +20,18 @@ router.post('/register', authLimiter, async (req, res) => {
     try {
         const { username, email, password, phone } = req.body;
 
-        if (!username || !password || !email) {
-            return res.status(400).json({ message: 'Username, email, and password are required' });
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Username and password are required' });
         }
 
+        const normalizedEmail = email && email.trim() ? email.trim().toLowerCase() : undefined;
+
         const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const existingUser = await User.findOne({
-            $or: [
-                { username: { $regex: new RegExp(`^${escapedUsername}$`, 'i') } },
-                { email: email.toLowerCase() }
-            ]
-        });
+        const orConditions = [{ username: { $regex: new RegExp(`^${escapedUsername}$`, 'i') } }];
+        if (normalizedEmail) {
+            orConditions.push({ email: normalizedEmail });
+        }
+        const existingUser = await User.findOne({ $or: orConditions });
 
         if (existingUser) {
             return res.status(400).json({ message: 'Username already exists' });
@@ -40,7 +41,7 @@ router.post('/register', authLimiter, async (req, res) => {
 
         const newUser = new User({
             username,
-            email: email.toLowerCase(),
+            email: normalizedEmail,
             password: hashedPassword,
             phone: phone ? phone.trim() : undefined,
             role: 'user' // Explicitly set role to user
@@ -84,13 +85,48 @@ router.post('/login', authLimiter, async (req, res) => {
                 SECRET_KEY,
                 { expiresIn: '1h' }
             );
-            res.json({ token, user: { username: user.username, role: user.role } });
+            res.json({
+                token,
+                user: { username: user.username, email: user.email || '', phone: user.phone || '', role: user.role }
+            });
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
         }
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error during login' });
+    }
+});
+
+// PUT /api/auth/profile
+router.put('/profile', protect, async (req, res) => {
+    try {
+        const { email } = req.body;
+        const normalizedEmail = email && email.trim() ? email.trim().toLowerCase() : undefined;
+
+        if (!normalizedEmail) {
+            return res.status(400).json({ message: 'A valid email address is required' });
+        }
+
+        const existingUser = await User.findOne({ email: normalizedEmail, _id: { $ne: req.user.id } });
+        if (existingUser) {
+            return res.status(400).json({ message: 'That email address is already in use' });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.email = normalizedEmail;
+        await user.save();
+
+        res.json({
+            user: { username: user.username, email: user.email || '', phone: user.phone || '', role: user.role }
+        });
+    } catch (error) {
+        console.error('Profile update error:', error);
+        res.status(500).json({ message: 'Server error updating profile' });
     }
 });
 

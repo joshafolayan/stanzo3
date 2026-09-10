@@ -78,8 +78,22 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const updateProfile = async (email) => {
+        try {
+            const { data } = await axios.put('/api/auth/profile', { email });
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setUser(data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to update profile'
+            };
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, loading, updateProfile }}>
             {children}
         </AuthContext.Provider>
     );
