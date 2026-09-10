@@ -78,7 +78,6 @@ const Register = () => {
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-black focus:border-brand-black outline-none transition-colors"
                                 placeholder="Enter your email"
-                                required
                             />
                         </div>
 
