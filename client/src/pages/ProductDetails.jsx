@@ -6,6 +6,7 @@ import { Check, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
 import clsx from 'clsx';
 import Header from '../components/Header';
 import { getImageUrl } from '../utils/image';
+import { stockMode, getStock, isSoldOut as productSoldOut, isColorAvailable, isSizeAvailable } from '../utils/stock';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -30,7 +31,10 @@ const ProductDetails = () => {
 
                 if (foundProduct) {
                     setProduct(foundProduct);
-                    if (foundProduct.sizes?.length > 0) setSelectedSize(foundProduct.sizes[0]);
+                    // Pre-select the first size that's still in stock
+                    if (foundProduct.sizes?.length > 0) {
+                        setSelectedSize(foundProduct.sizes.find(size => isSizeAvailable(foundProduct, size)) || foundProduct.sizes[0]);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch product", error);
@@ -48,13 +52,30 @@ const ProductDetails = () => {
         ? product.images.map(getImageUrl)
         : [getImageUrl(product.image)];
 
-    const isSoldOut = product.stockQuantity !== null && product.stockQuantity !== undefined && product.stockQuantity <= 0;
-    const remaining = getRemainingStock(product); // null = not tracked
-    const isLowStock = !isSoldOut && product.stockQuantity > 0 && product.stockQuantity <= 5;
-    const cartFull = !isSoldOut && remaining !== null && remaining < 1;
+    const isVariant = stockMode(product) === 'variant';
+    const needsColor = isVariant && product.colors?.length > 0;
+    const needsSize = isVariant && product.sizes?.length > 0;
+    const colorName = selectedColor?.name;
+    // For products without colours, per-option stock is stored under colour ''
+    const colorForSizes = needsColor ? colorName : (isVariant ? '' : undefined);
+    const selectionComplete = (!needsColor || !!selectedColor) && (!needsSize || !!selectedSize);
+
+    const isSoldOut = productSoldOut(product); // every option gone
+    const optionStock = selectionComplete ? getStock(product, colorName, selectedSize) : null; // null = not tracked / not chosen yet
+    const optionSoldOut = !isSoldOut && optionStock !== null && optionStock <= 0;
+    const remaining = selectionComplete ? getRemainingStock(product, colorName, selectedSize) : null;
+    const cartFull = !isSoldOut && !optionSoldOut && remaining !== null && remaining < 1;
+    const isLowStock = !isSoldOut && optionStock > 0 && optionStock <= 5;
+    const canAdd = !isSoldOut && !optionSoldOut && !cartFull && selectionComplete;
+
+    const buttonLabel = isSoldOut ? 'Sold Out'
+        : !selectionComplete ? (needsColor && !selectedColor ? 'Select a Colour' : 'Select a Size')
+        : optionSoldOut ? 'Sold Out in This Option'
+        : cartFull ? 'All Available Stock in Cart'
+        : isAdded ? 'Added to Cart' : 'Add to Cart';
 
     const handleAddToCart = () => {
-        if (isSoldOut || cartFull) return;
+        if (!canAdd) return;
         addToCart(product, selectedColor?.name, selectedSize);
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000);
@@ -144,7 +165,7 @@ const ProductDetails = () => {
                         </div>
 
                         {isSoldOut && <p className="text-sm font-medium text-red-600 mb-8 uppercase tracking-widest">Sold out</p>}
-                        {isLowStock && <p className="text-sm font-medium text-red-600 mb-8">Only {product.stockQuantity} left in stock</p>}
+                        {isLowStock && <p className="text-sm font-medium text-red-600 mb-8">Only {optionStock} left{isVariant ? ' in this option' : ' in stock'}</p>}
 
                         {/* Colors */}
                         {product.colors && product.colors.length > 0 && (
@@ -156,25 +177,34 @@ const ProductDetails = () => {
                                     </span>
                                 </span>
                                 <div className="flex gap-3 flex-wrap">
-                                    {product.colors.map((color, idx) => (
-                                        <button
-                                            key={`${color.hex}-${color.name}-${idx}`}
-                                            onClick={() => setSelectedColor(color)}
-                                            disabled={isSoldOut}
-                                            className={clsx(
-                                                "w-10 h-10 rounded-full border border-gray-200 relative transition-transform hover:scale-110",
-                                                selectedColor?.hex === color.hex && selectedColor?.name === color.name ? "ring-2 ring-brand-black ring-offset-2" : ""
-                                            )}
-                                            style={{ backgroundColor: color.hex }}
-                                            title={color.name}
-                                        >
-                                            {selectedColor?.hex === color.hex && selectedColor?.name === color.name && (
-                                                <span className="absolute inset-0 flex items-center justify-center">
-                                                    <Check className={clsx("w-5 h-5", color.hex === '#FFFFFF' ? 'text-black' : 'text-white')} />
-                                                </span>
-                                            )}
-                                        </button>
-                                    ))}
+                                    {product.colors.map((color, idx) => {
+                                        const unavailable = isSoldOut || !isColorAvailable(product, color.name);
+                                        return (
+                                            <button
+                                                key={`${color.hex}-${color.name}-${idx}`}
+                                                onClick={() => setSelectedColor(color)}
+                                                disabled={unavailable}
+                                                className={clsx(
+                                                    "w-10 h-10 rounded-full border border-gray-200 relative transition-transform overflow-hidden",
+                                                    unavailable ? "opacity-30 cursor-not-allowed" : "hover:scale-110",
+                                                    selectedColor?.hex === color.hex && selectedColor?.name === color.name ? "ring-2 ring-brand-black ring-offset-2" : ""
+                                                )}
+                                                style={{ backgroundColor: color.hex }}
+                                                title={unavailable ? `${color.name} - sold out` : color.name}
+                                            >
+                                                {unavailable && (
+                                                    <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                                                        <span className="block w-[140%] h-0.5 bg-gray-700 rotate-45" />
+                                                    </span>
+                                                )}
+                                                {selectedColor?.hex === color.hex && selectedColor?.name === color.name && (
+                                                    <span className="absolute inset-0 flex items-center justify-center">
+                                                        <Check className={clsx("w-5 h-5", color.hex === '#FFFFFF' ? 'text-black' : 'text-white')} />
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -184,38 +214,45 @@ const ProductDetails = () => {
                             <div className="mb-10">
                                 <span className="block text-sm font-medium text-brand-black uppercase tracking-widest mb-3">Size</span>
                                 <div className="flex gap-3 flex-wrap">
-                                    {product.sizes.map(size => (
-                                        <button
-                                            key={size}
-                                            onClick={() => setSelectedSize(size)}
-                                            disabled={isSoldOut}
-                                            className={clsx(
-                                                "px-6 py-3 text-sm font-medium border transition-colors",
-                                                selectedSize === size
-                                                    ? "bg-brand-black text-brand-white border-brand-black"
-                                                    : "bg-white text-brand-gray border-gray-200 hover:border-brand-black hover:text-brand-black"
-                                            )}
-                                        >
-                                            {size}
-                                        </button>
-                                    ))}
+                                    {product.sizes.map(size => {
+                                        // Sizes sold out for the chosen colour (or for every colour, if none chosen yet) are crossed out
+                                        const unavailable = isSoldOut || !isSizeAvailable(product, size, colorForSizes);
+                                        return (
+                                            <button
+                                                key={size}
+                                                onClick={() => setSelectedSize(size)}
+                                                disabled={unavailable}
+                                                title={unavailable ? `${size} - sold out${needsColor && colorName ? ` in ${colorName}` : ''}` : size}
+                                                className={clsx(
+                                                    "px-6 py-3 text-sm font-medium border transition-colors",
+                                                    unavailable
+                                                        ? "bg-gray-50 text-gray-300 border-gray-200 line-through cursor-not-allowed"
+                                                        : selectedSize === size
+                                                            ? "bg-brand-black text-brand-white border-brand-black"
+                                                            : "bg-white text-brand-gray border-gray-200 hover:border-brand-black hover:text-brand-black"
+                                                )}
+                                            >
+                                                {size}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
 
                         <button
                             onClick={handleAddToCart}
-                            disabled={isSoldOut || cartFull}
+                            disabled={!canAdd}
                             className={clsx(
                                 "w-full py-4 text-sm tracking-[0.2em] uppercase font-bold transition-all duration-300 border",
-                                isSoldOut || cartFull
+                                !canAdd
                                     ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
                                     : isAdded
                                         ? "bg-green-600 text-white border-green-600"
                                         : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
                             )}
                         >
-                            {isSoldOut ? "Sold Out" : cartFull ? "All Available Stock in Cart" : isAdded ? "Added to Cart" : "Add to Cart"}
+                            {buttonLabel}
                         </button>
 
                         {product.description && (

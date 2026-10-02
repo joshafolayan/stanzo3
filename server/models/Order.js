@@ -53,7 +53,16 @@ const orderSchema = new mongoose.Schema({
     stockDeducted: {
         type: Boolean,
         default: false
-    }
+    },
+    // Exactly what was taken from stock, so it can be put back precisely if the order is cancelled
+    stockDeductions: [{
+        _id: false,
+        product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+        mode: { type: String, enum: ['variant', 'single'] },
+        color: String,
+        size: String,
+        quantity: Number
+    }]
 }, {
     timestamps: true
 });

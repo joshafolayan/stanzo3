@@ -5,6 +5,11 @@ import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, X, Star } from 'lucide-react';
 import { getImageUrl } from '../../utils/image';
 import { getNearestColorName } from '../../utils/colors';
+import { stockMode, getTotalStock } from '../../utils/stock';
+
+const parseSizes = (sizes) => (typeof sizes === 'string' ? sizes.split(',') : (sizes || []))
+    .map(s => s.trim()).filter(Boolean);
+const optionKey = (color, size) => `${color}|${size}`;
 
 const AdminProducts = () => {
     const [products, setProducts] = useState([]);
@@ -17,6 +22,9 @@ const AdminProducts = () => {
     const [newImages, setNewImages] = useState([]); // { file, preview } selected but not yet uploaded
     const itemsPerPage = 10;
     const MAX_NEW_IMAGES = 5;
+    const [variantQty, setVariantQty] = useState({}); // "colour|size" -> quantity typed in the stock grid
+    const [showStockErrors, setShowStockErrors] = useState(false);
+    const [bulkQty, setBulkQty] = useState('');
 
     const { register, control, handleSubmit, reset, setValue, watch } = useForm({
         defaultValues: {
@@ -99,23 +107,56 @@ const AdminProducts = () => {
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+    // The stock grid follows whatever colours and sizes are currently in the form
+    const watchedColors = watch('colors') || [];
+    const watchedSizes = watch('sizes');
+    const stockColors = watchedColors.map(c => (c?.name || '').trim()).filter(Boolean);
+    const stockSizes = parseSizes(watchedSizes);
+    const hasOptions = stockColors.length > 0 || stockSizes.length > 0;
+    const stockCombos = hasOptions
+        ? (stockColors.length > 0 ? stockColors : ['']).flatMap(color =>
+            (stockSizes.length > 0 ? stockSizes : ['']).map(size => ({ color, size })))
+        : [];
+    const isValidQty = (value) => value !== undefined && value !== '' && Number.isInteger(Number(value)) && Number(value) >= 0;
+    const missingCombos = stockCombos.filter(({ color, size }) => !isValidQty(variantQty[optionKey(color, size)]));
+
+    const setQty = (color, size, value) => setVariantQty(prev => ({ ...prev, [optionKey(color, size)]: value }));
+    const applyBulkQty = () => {
+        if (!isValidQty(bulkQty)) return;
+        setVariantQty(prev => {
+            const next = { ...prev };
+            stockCombos.forEach(({ color, size }) => { next[optionKey(color, size)] = bulkQty; });
+            return next;
+        });
+    };
+
     const onSubmit = async (data) => {
+        // Every option needs a stock number - nothing is guessed
+        if (hasOptions && missingCombos.length > 0) {
+            setShowStockErrors(true);
+            return;
+        }
+        if (!hasOptions && !isValidQty(data.stockQuantity)) {
+            setShowStockErrors(true);
+            return;
+        }
+
         setIsSubmitting(true);
         const formData = new FormData();
-
-        // Process sizes (convert comma separated string to array if needed, or handle array from checkboxes)
-        // For simplicity, let's assume valid data or just simple text input for now split by comma
-        const sizesArray = typeof data.sizes === 'string' ? data.sizes.split(',').map(s => s.trim()) : data.sizes;
 
         const productPayload = {
             name: data.name,
             price: Number(data.price),
             discountPercentage: data.discountPercentage ? Number(data.discountPercentage) : 0,
-            stockQuantity: data.stockQuantity === '' || data.stockQuantity === null ? null : Number(data.stockQuantity), // blank = not tracked
             category: data.category,
             colors: data.colors,
-            sizes: sizesArray
+            sizes: parseSizes(data.sizes)
         };
+        if (hasOptions) {
+            productPayload.variantStock = stockCombos.map(({ color, size }) => ({ color, size, quantity: Number(variantQty[optionKey(color, size)]) }));
+        } else {
+            productPayload.stockQuantity = Number(data.stockQuantity);
+        }
         if (editingProduct) {
             productPayload.images = existingImages; // images kept; anything left out gets deleted
         }
@@ -154,12 +195,16 @@ const AdminProducts = () => {
         setEditingProduct(product);
         clearNewImages();
         fetchCategories();
+        setShowStockErrors(false);
+        setBulkQty('');
+        setVariantQty(Object.fromEntries((product?.variantStock || []).map(v => [optionKey(v.color, v.size), String(v.quantity)])));
         if (product) {
             reset({
                 name: product.name,
                 price: product.price,
                 discountPercentage: product.discountPercentage || '',
-                stockQuantity: product.stockQuantity ?? '',
+                // The single number only carries over for products without colours/sizes
+                stockQuantity: stockMode(product) === 'single' && !product.colors?.length && !product.sizes?.length ? product.stockQuantity : '',
                 category: product.category || categories[0] || '',
                 colors: product.colors,
                 sizes: product.sizes.join(', ') // Simple text edit for sizes
@@ -227,13 +272,20 @@ const AdminProducts = () => {
                                 </td>
                                 <td className="p-4 text-gray-600">#{product.price.toLocaleString()}</td>
                                 <td className="p-4 text-sm">
-                                    {product.stockQuantity === null || product.stockQuantity === undefined ? (
-                                        <span className="text-gray-400">Not tracked</span>
-                                    ) : product.stockQuantity <= 0 ? (
-                                        <span className="bg-red-50 text-red-700 font-semibold px-2 py-0.5 rounded">Sold out</span>
-                                    ) : (
-                                        <span className={product.stockQuantity <= 5 ? 'text-amber-600 font-semibold' : 'text-gray-700'}>{product.stockQuantity} left</span>
-                                    )}
+                                    {(() => {
+                                        const total = getTotalStock(product);
+                                        const soldOutOptions = (product.variantStock || []).filter(v => v.quantity <= 0).length;
+                                        if (total === null) return <span className="text-gray-400">Not tracked</span>;
+                                        if (total <= 0) return <span className="bg-red-50 text-red-700 font-semibold px-2 py-0.5 rounded">Sold out</span>;
+                                        return (
+                                            <>
+                                                <span className={total <= 5 ? 'text-amber-600 font-semibold' : 'text-gray-700'}>{total} left</span>
+                                                {soldOutOptions > 0 && (
+                                                    <div className="text-xs text-red-600 mt-0.5">{soldOutOptions} option{soldOutOptions > 1 ? 's' : ''} sold out</div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </td>
                                 <td className="p-4 text-sm text-gray-500">
                                     {product.colors.length} colors, {product.sizes.length} sizes
@@ -336,12 +388,6 @@ const AdminProducts = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Quantity in Stock</label>
-                                <input type="number" min="0" step="1" {...register('stockQuantity', { min: 0 })} placeholder="Leave blank to not track stock" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
-                                <p className="text-xs text-gray-400 mt-1">Goes down automatically when customers order. At 0 the product shows as sold out.</p>
-                            </div>
-
-                            <div>
                                 <div className="flex justify-between items-center mb-1">
                                     <label className="block text-sm font-medium">Category</label>
                                     <Link to="/admin/categories" className="text-xs text-blue-600 hover:underline">Manage categories</Link>
@@ -425,6 +471,74 @@ const AdminProducts = () => {
                             <div>
                                 <label className="block text-sm font-medium mb-1">Sizes (comma separated)</label>
                                 <input {...register('sizes')} placeholder="S, M, L, XL" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Quantity in Stock</label>
+                                {!hasOptions ? (
+                                    <>
+                                        <input
+                                            type="number" min="0" step="1"
+                                            {...register('stockQuantity')}
+                                            placeholder="e.g. 10"
+                                            className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none ${showStockErrors && !isValidQty(watch('stockQuantity')) ? 'border-red-500 bg-red-50' : ''}`}
+                                        />
+                                        {showStockErrors && !isValidQty(watch('stockQuantity')) && (
+                                            <p className="text-xs text-red-600 mt-1">Enter how many are in stock (0 if none).</p>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        {editingProduct && stockMode(editingProduct) === 'single' && (
+                                            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mb-2">
+                                                This product had one stock number ({editingProduct.stockQuantity}) for all options. Enter stock for each option below.
+                                            </p>
+                                        )}
+                                        <div className="flex items-center gap-2 mb-2 text-xs text-gray-500">
+                                            <span>Set all to</span>
+                                            <input type="number" min="0" step="1" value={bulkQty} onChange={(e) => setBulkQty(e.target.value)} className="w-16 border rounded p-1" />
+                                            <button type="button" onClick={applyBulkQty} disabled={!isValidQty(bulkQty)} className="text-blue-600 font-medium hover:underline disabled:opacity-40 disabled:no-underline">Apply</button>
+                                        </div>
+                                        <div className="overflow-x-auto border rounded-lg">
+                                            <table className="text-sm w-full">
+                                                {stockSizes.length > 0 && (
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            {stockColors.length > 0 && <th className="p-2 text-left font-medium text-gray-500">Colour</th>}
+                                                            {stockSizes.map(size => <th key={size} className="p-2 font-medium text-gray-500 text-center">{size}</th>)}
+                                                        </tr>
+                                                    </thead>
+                                                )}
+                                                <tbody className="divide-y">
+                                                    {(stockColors.length > 0 ? stockColors : ['']).map(color => (
+                                                        <tr key={color || 'all'}>
+                                                            {stockColors.length > 0 && <td className="p-2 font-medium text-gray-700 whitespace-nowrap">{color}</td>}
+                                                            {(stockSizes.length > 0 ? stockSizes : ['']).map(size => {
+                                                                const value = variantQty[optionKey(color, size)] ?? '';
+                                                                const invalid = showStockErrors && !isValidQty(value);
+                                                                return (
+                                                                    <td key={size || 'qty'} className="p-1.5 text-center">
+                                                                        <input
+                                                                            type="number" min="0" step="1"
+                                                                            value={value}
+                                                                            onChange={(e) => setQty(color, size, e.target.value)}
+                                                                            aria-label={`Stock for ${[color, size].filter(Boolean).join(' ')}`}
+                                                                            className={`w-16 border rounded p-1 text-center focus:ring-2 focus:ring-blue-500 outline-none ${invalid ? 'border-red-500 bg-red-50' : ''}`}
+                                                                        />
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {showStockErrors && missingCombos.length > 0 && (
+                                            <p className="text-xs text-red-600 mt-1">Enter a quantity for every option ({missingCombos.length} missing). Use 0 for options you don't have.</p>
+                                        )}
+                                    </>
+                                )}
+                                <p className="text-xs text-gray-400 mt-1">Stock goes down when you mark an order as paid. Options at 0 can't be bought.</p>
                             </div>
 
                             <div className="pt-4 border-t flex justify-end gap-3">

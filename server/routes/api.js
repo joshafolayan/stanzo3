@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const { protect, SECRET_KEY, VERIFY_OPTIONS } = require('../middleware/auth');
 const User = require('../models/User');
 const { sendOrderConfirmationEmail, sendNewOrderAdminEmail } = require('../utils/email');
-const { checkStock } = require('../utils/stock');
+const { checkStock, stockMode } = require('../utils/stock');
 
 // GET /api/products - Get all products
 router.get('/products', async (req, res) => {
@@ -99,6 +99,16 @@ router.post('/checkout', checkoutLimiter, async (req, res) => {
             }
             if (item.selectedSize && !dbProduct.sizes.includes(item.selectedSize)) {
                 return res.status(400).json({ success: false, message: `The selected size for ${dbProduct.name} is no longer available. Please remove it from your cart and add it again.` });
+            }
+
+            // With per-option stock we need to know exactly which option is being bought
+            if (stockMode(dbProduct) === 'variant') {
+                if (dbProduct.colors.length > 0 && !item.selectedColor) {
+                    return res.status(400).json({ success: false, message: `Please choose a colour for ${dbProduct.name}. Remove it from your cart and add it again with a colour.` });
+                }
+                if (dbProduct.sizes.length > 0 && !item.selectedSize) {
+                    return res.status(400).json({ success: false, message: `Please choose a size for ${dbProduct.name}. Remove it from your cart and add it again with a size.` });
+                }
             }
 
             const quantity = Number(item.quantity || 1);

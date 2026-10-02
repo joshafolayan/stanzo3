@@ -50,17 +50,40 @@ const parseProductData = (raw) => {
         data.discountPercentage = Number(input.discountPercentage) || 0;
         if (data.discountPercentage < 0 || data.discountPercentage > 100) throw new Error('Discount must be between 0 and 100');
     }
-    if (Array.isArray(input.colors)) {
-        data.colors = input.colors.map(c => ({ name: String(c?.name || '').trim(), hex: String(c?.hex || '') }));
-    }
-    if (Array.isArray(input.sizes)) {
-        data.sizes = input.sizes.map(s => String(s).trim()).filter(Boolean);
-    }
+    data.colors = (Array.isArray(input.colors) ? input.colors : [])
+        .map(c => ({ name: String(c?.name || '').trim(), hex: String(c?.hex || '') }));
+    data.sizes = (Array.isArray(input.sizes) ? input.sizes : [])
+        .map(s => String(s).trim()).filter(Boolean);
     if (Array.isArray(input.images)) {
         data.images = input.images.filter(img => typeof img === 'string');
     }
-    data.stockQuantity = parseStockQuantity(input.stockQuantity);
-    if (data.stockQuantity === undefined) delete data.stockQuantity;
+
+    // Stock: required, never guessed. Products with colours and/or sizes need a number for every
+    // combination; products with neither need a single number.
+    const colors = (data.colors || []).map(c => c.name);
+    const sizes = data.sizes || [];
+    if (colors.some(name => !name)) throw new Error('Every colour needs a name');
+    if (new Set(colors).size !== colors.length) throw new Error('Two colours have the same name');
+    if (new Set(sizes).size !== sizes.length) throw new Error('A size is listed twice');
+
+    if (colors.length > 0 || sizes.length > 0) {
+        const provided = Array.isArray(input.variantStock) ? input.variantStock : [];
+        const lookup = new Map(provided.map(v => [`${v?.color || ''}|${v?.size || ''}`, v?.quantity]));
+        data.variantStock = [];
+        for (const color of colors.length > 0 ? colors : ['']) {
+            for (const size of sizes.length > 0 ? sizes : ['']) {
+                const label = [color, size].filter(Boolean).join(' / ');
+                const quantity = parseStockQuantity(lookup.get(`${color}|${size}`));
+                if (quantity === null || quantity === undefined) throw new Error(`Enter a stock quantity for ${label}`);
+                data.variantStock.push({ color, size, quantity });
+            }
+        }
+        data.stockQuantity = null;
+    } else {
+        data.stockQuantity = parseStockQuantity(input.stockQuantity);
+        if (data.stockQuantity === null || data.stockQuantity === undefined) throw new Error('Enter a quantity in stock');
+        data.variantStock = [];
+    }
     return data;
 };
 
@@ -209,6 +232,7 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
         const { reserveStock, releaseStock } = require('../utils/stock');
         const PAID_STATUSES = ['paid', 'processing', 'shipped', 'delivered'];
         let stockDeducted = existingOrder.stockDeducted;
+        let stockDeductions = existingOrder.stockDeductions;
 
         if (PAID_STATUSES.includes(status) && !existingOrder.stockDeducted) {
             const claimed = await Order.findOneAndUpdate(
@@ -217,7 +241,8 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
             );
             if (claimed) {
                 try {
-                    await reserveStock(existingOrder.items);
+                    stockDeductions = await reserveStock(existingOrder.items);
+                    await Order.updateOne({ _id: existingOrder._id }, { stockDeductions });
                 } catch (err) {
                     await Order.updateOne({ _id: existingOrder._id }, { stockDeducted: false });
                     if (err.isStockError) {
@@ -233,13 +258,19 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
                 { stockDeducted: false }
             );
             if (claimed) {
-                await releaseStock(existingOrder.items);
+                // Orders paid before per-option stock existed have no deduction list: they used the single number
+                const deductions = claimed.stockDeductions?.length > 0
+                    ? claimed.stockDeductions
+                    : existingOrder.items.map(item => ({ product: item.product, mode: 'single', quantity: item.quantity }));
+                await releaseStock(deductions);
             }
             stockDeducted = false;
+            stockDeductions = [];
         }
 
         existingOrder.status = status;
         existingOrder.stockDeducted = stockDeducted;
+        existingOrder.stockDeductions = stockDeductions;
         existingOrder.processedBy = req.user.username;
         const updatedOrder = await existingOrder.save();
 

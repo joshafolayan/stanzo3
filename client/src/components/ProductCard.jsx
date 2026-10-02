@@ -4,11 +4,15 @@ import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { getImageUrl } from '../utils/image';
+import { stockMode, getStock, getTotalStock, isSoldOut as productSoldOut, isSizeAvailable } from '../utils/stock';
 
 const ProductCard = ({ product }) => {
     const { addToCart, getRemainingStock } = useCart();
     const [selectedColors, setSelectedColors] = useState([]);
-    const [selectedSize, setSelectedSize] = useState(product.sizes && product.sizes.length > 0 ? product.sizes[0] : null);
+    // Pre-select the first size that's still in stock
+    const [selectedSize, setSelectedSize] = useState(product.sizes && product.sizes.length > 0
+        ? (product.sizes.find(size => isSizeAvailable(product, size)) || product.sizes[0])
+        : null);
     const [isAdded, setIsAdded] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [imageFailed, setImageFailed] = useState(false);
@@ -41,14 +45,47 @@ const ProductCard = ({ product }) => {
         });
     };
 
-    const isSoldOut = product.stockQuantity !== null && product.stockQuantity !== undefined && product.stockQuantity <= 0;
-    const remaining = getRemainingStock(product); // null = not tracked
-    const isLowStock = !isSoldOut && product.stockQuantity > 0 && product.stockQuantity <= 5;
-    const cartFull = !isSoldOut && remaining !== null && remaining < 1;
+    const isVariant = stockMode(product) === 'variant';
+    const needsColor = isVariant && product.colors.length > 0;
+    const isSoldOut = productSoldOut(product);
+    const totalStock = getTotalStock(product);
+    const isLowStock = !isSoldOut && totalStock > 0 && totalStock <= 5;
+
+    // Per-option stock: is this colour in stock in the chosen size?
+    const isColorUnavailable = (color) => isVariant && getStock(product, color.name, selectedSize) <= 0;
+    // Units of a colour that can still go in the cart (null = not tracked)
+    const remainingFor = (color) => getRemainingStock(product, color?.name, selectedSize);
+
+    const remaining = isVariant ? null : getRemainingStock(product); // single-number stock
+    const cartFull = !isSoldOut && (isVariant
+        ? (needsColor
+            ? selectedColors.length > 0 && selectedColors.every(c => remainingFor(c) < 1)
+            : remainingFor(null) !== null && remainingFor(null) < 1)
+        : remaining !== null && remaining < 1);
+    const needsColorChoice = needsColor && selectedColors.length === 0;
+    const canAdd = !isSoldOut && !cartFull && !needsColorChoice;
+
+    const handleSizeChange = (size) => {
+        setSelectedSize(size);
+        // Drop colours that are sold out in the new size
+        if (isVariant) setSelectedColors(prev => prev.filter(c => getStock(product, c.name, size) > 0));
+    };
 
     const handleAddToCart = () => {
-        if (isSoldOut || cartFull) return;
-        if (selectedColors.length === 0) {
+        if (!canAdd) return;
+        if (isVariant) {
+            // Each colour has its own stock: add the ones that still have room
+            const colors = needsColor ? selectedColors : [null];
+            const skipped = [];
+            colors.forEach(color => {
+                const left = remainingFor(color);
+                if (left === null || left >= 1) addToCart(product, color?.name ?? null, selectedSize);
+                else skipped.push(color?.name);
+            });
+            if (skipped.length > 0) {
+                alert(`No more stock for ${skipped.join(', ')}${selectedSize ? ` in size ${selectedSize}` : ''} - the rest were added.`);
+            }
+        } else if (selectedColors.length === 0) {
             // No color selected — add without color
             addToCart(product, null, selectedSize);
         } else {
@@ -131,7 +168,7 @@ const ProductCard = ({ product }) => {
                         </span>
                     </p>
                     {isLowStock && (
-                        <p className="text-[10px] md:text-xs font-medium text-red-600 -mt-1 md:-mt-3 mb-2">Only {product.stockQuantity} left</p>
+                        <p className="text-[10px] md:text-xs font-medium text-red-600 -mt-1 md:-mt-3 mb-2">Only {totalStock} left</p>
                     )}
                 </div>
             </Link>
@@ -141,18 +178,25 @@ const ProductCard = ({ product }) => {
                     <div className="flex gap-1 md:gap-2 flex-wrap pb-1">
                         {product.colors.map((color, idx) => {
                             const isSelected = selectedColors.some(c => c.hex === color.hex && c.name === color.name);
+                            const unavailable = isSoldOut || isColorUnavailable(color);
                             return (
                                 <button
                                     key={`${color.hex}-${color.name}-${idx}`}
                                     onClick={() => toggleColor(color)}
-                                    disabled={isSoldOut}
+                                    disabled={unavailable}
                                     className={clsx(
-                                        "w-5 h-5 md:w-6 md:h-6 rounded-full border border-gray-200 relative transition-transform duration-200 hover:scale-110",
+                                        "w-5 h-5 md:w-6 md:h-6 rounded-full border border-gray-200 relative transition-transform duration-200 overflow-hidden",
+                                        unavailable ? "opacity-30 cursor-not-allowed" : "hover:scale-110",
                                         isSelected ? "ring-2 ring-brand-black ring-offset-1" : ""
                                     )}
                                     style={{ backgroundColor: color.hex }}
-                                    title={color.name}
+                                    title={unavailable ? `${color.name} - sold out${selectedSize ? ` in ${selectedSize}` : ''}` : color.name}
                                 >
+                                    {unavailable && !isSoldOut && (
+                                        <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                                            <span className="block w-[140%] h-px bg-gray-700 rotate-45" />
+                                        </span>
+                                    )}
                                     {isSelected && (
                                         <span className="absolute inset-0 flex items-center justify-center">
                                             <Check className={clsx("w-4 h-4", color.hex === '#FFFFFF' ? 'text-black' : 'text-white')} />
@@ -166,37 +210,43 @@ const ProductCard = ({ product }) => {
 
                 <div className="mb-3 md:mb-6">
                     <div className="flex gap-1 md:gap-2 flex-wrap">
-                        {product.sizes.map((size) => (
-                            <button
-                                key={size}
-                                onClick={() => setSelectedSize(size)}
-                                disabled={isSoldOut}
-                                className={clsx(
-                                    "px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-medium border transition-colors",
-                                    selectedSize === size
-                                        ? "bg-brand-black text-brand-white border-brand-black"
-                                        : "bg-white text-brand-gray border-gray-200 hover:border-brand-black hover:text-brand-black"
-                                )}
-                            >
-                                {size}
-                            </button>
-                        ))}
+                        {product.sizes.map((size) => {
+                            // A size is crossed out when no colour has it left
+                            const unavailable = isSoldOut || !isSizeAvailable(product, size, product.colors.length > 0 ? undefined : '');
+                            return (
+                                <button
+                                    key={size}
+                                    onClick={() => handleSizeChange(size)}
+                                    disabled={unavailable}
+                                    className={clsx(
+                                        "px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-medium border transition-colors",
+                                        unavailable
+                                            ? "bg-gray-50 text-gray-300 border-gray-200 line-through cursor-not-allowed"
+                                            : selectedSize === size
+                                                ? "bg-brand-black text-brand-white border-brand-black"
+                                                : "bg-white text-brand-gray border-gray-200 hover:border-brand-black hover:text-brand-black"
+                                    )}
+                                >
+                                    {size}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
                 <button
                     onClick={handleAddToCart}
-                    disabled={isSoldOut || cartFull}
+                    disabled={!canAdd}
                     className={clsx(
                         "w-full py-2 md:py-3 text-[10px] md:text-sm tracking-wider md:tracking-widest uppercase font-medium transition-all duration-300 border",
-                        isSoldOut || cartFull
+                        !canAdd
                             ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
                             : isAdded
                                 ? "bg-green-600 text-white border-green-600"
                                 : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
                     )}
                 >
-                    {isSoldOut ? "Sold Out" : cartFull ? "All in Cart" : isAdded ? "Added" : "Add to Cart"}
+                    {isSoldOut ? "Sold Out" : needsColorChoice ? "Select a Colour" : cartFull ? "All in Cart" : isAdded ? "Added" : "Add to Cart"}
                 </button>
             </div>
         </div>

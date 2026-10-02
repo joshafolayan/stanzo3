@@ -34,7 +34,16 @@ const productSchema = new mongoose.Schema({
     sizes: [String],
     description: String,
     category: String,
-    // Units available. null/missing = stock not tracked (always purchasable).
+    // Stock per colour/size combination. Used when the product has colours and/or sizes.
+    // color is '' when the product has no colours; size is '' when it has no sizes.
+    variantStock: [{
+        _id: false,
+        color: { type: String, default: '' },
+        size: { type: String, default: '' },
+        quantity: { type: Number, required: true, min: 0 }
+    }],
+    // Single stock number, for products without colours or sizes (and older products not yet converted).
+    // null/missing = stock not tracked (always purchasable).
     stockQuantity: {
         type: Number,
         min: 0,

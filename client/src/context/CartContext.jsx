@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { getStock, stockKey } from '../utils/stock';
 
 const CartContext = createContext();
 
@@ -9,19 +10,23 @@ export const CartProvider = ({ children }) => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
-    // Units of a product already in the cart, across all colour/size variants
-    const getQuantityInCart = (productId, excludeCartId = null) => cart
-        .filter(item => item._id === productId && item.cartId !== excludeCartId)
-        .reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    // Units already in the cart that draw from the same stock (same option, or same product if stock is a single number)
+    const getQuantityInCart = (product, color, size, excludeCartId = null) => {
+        const key = stockKey(product, color, size);
+        return cart
+            .filter(item => item.cartId !== excludeCartId && stockKey(item, item.selectedColor, item.selectedSize) === key)
+            .reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    };
 
-    // How many more units can be added; null = stock not tracked (unlimited)
-    const getRemainingStock = (product) => {
-        if (product.stockQuantity === null || product.stockQuantity === undefined) return null;
-        return Math.max(product.stockQuantity - getQuantityInCart(product._id), 0);
+    // How many more units of this option can be added; null = stock not tracked (unlimited)
+    const getRemainingStock = (product, color, size) => {
+        const stock = getStock(product, color, size);
+        if (stock === null) return null;
+        return Math.max(stock - getQuantityInCart(product, color, size), 0);
     };
 
     const addToCart = (product, color, size) => {
-        const remaining = getRemainingStock(product);
+        const remaining = getRemainingStock(product, color, size);
         if (remaining !== null && remaining < 1) return false;
 
         // Must match the server's checkout calculation (server/routes/api.js)
@@ -50,8 +55,9 @@ export const CartProvider = ({ children }) => {
 
     // Max quantity a cart line can be set to without exceeding stock; null = unlimited
     const getMaxQuantity = (cartItem) => {
-        if (cartItem.stockQuantity === null || cartItem.stockQuantity === undefined) return null;
-        return Math.max(cartItem.stockQuantity - getQuantityInCart(cartItem._id, cartItem.cartId), 0);
+        const stock = getStock(cartItem, cartItem.selectedColor, cartItem.selectedSize);
+        if (stock === null) return null;
+        return Math.max(stock - getQuantityInCart(cartItem, cartItem.selectedColor, cartItem.selectedSize, cartItem.cartId), 0);
     };
 
     const updateQuantity = (cartId, quantity) => {
