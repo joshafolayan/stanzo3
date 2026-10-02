@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { getImageUrl } from '../utils/image';
 
 const ProductCard = ({ product }) => {
-    const { addToCart } = useCart();
+    const { addToCart, getRemainingStock } = useCart();
     const [selectedColors, setSelectedColors] = useState([]);
     const [selectedSize, setSelectedSize] = useState(product.sizes && product.sizes.length > 0 ? product.sizes[0] : null);
     const [isAdded, setIsAdded] = useState(false);
@@ -41,28 +41,38 @@ const ProductCard = ({ product }) => {
         });
     };
 
+    const isSoldOut = product.stockQuantity !== null && product.stockQuantity !== undefined && product.stockQuantity <= 0;
+    const remaining = getRemainingStock(product); // null = not tracked
+    const isLowStock = !isSoldOut && product.stockQuantity > 0 && product.stockQuantity <= 5;
+    const cartFull = !isSoldOut && remaining !== null && remaining < 1;
+
     const handleAddToCart = () => {
+        if (isSoldOut || cartFull) return;
         if (selectedColors.length === 0) {
             // No color selected — add without color
             addToCart(product, null, selectedSize);
         } else {
-            // Add one cart entry per selected color
-            selectedColors.forEach(color => {
+            // Add one cart entry per selected color (never more than what's left in stock)
+            const colorsToAdd = remaining === null ? selectedColors : selectedColors.slice(0, remaining);
+            colorsToAdd.forEach(color => {
                 addToCart(product, color.name, selectedSize);
             });
+            if (colorsToAdd.length < selectedColors.length) {
+                alert(`Only ${remaining} of this item left — added the first ${remaining} colour(s).`);
+            }
         }
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000);
     };
 
     return (
-        <div className="group flex flex-col relative w-full cursor-pointer z-0 hover:z-20">
+        <div className={clsx("group flex flex-col relative w-full cursor-pointer z-0 hover:z-20", isSoldOut && "opacity-60 grayscale")}>
             <Link to={`/product/${product.id}`} className="block">
                 <div className="w-full aspect-[4/5] relative overflow-hidden bg-gray-50 mb-4 group/slider product-pop-frame">
                     {/* Sale Badge overlay — lives inside the frame so it pops with it */}
                     <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
                         <span className="bg-brand-black text-brand-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full tracking-wider uppercase">
-                            Sale
+                            {isSoldOut ? 'Sold Out' : 'Sale'}
                         </span>
                     </div>
 
@@ -120,6 +130,9 @@ const ProductCard = ({ product }) => {
                             #{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()}
                         </span>
                     </p>
+                    {isLowStock && (
+                        <p className="text-[10px] md:text-xs font-medium text-red-600 -mt-1 md:-mt-3 mb-2">Only {product.stockQuantity} left</p>
+                    )}
                 </div>
             </Link>
 
@@ -132,6 +145,7 @@ const ProductCard = ({ product }) => {
                                 <button
                                     key={`${color.hex}-${color.name}-${idx}`}
                                     onClick={() => toggleColor(color)}
+                                    disabled={isSoldOut}
                                     className={clsx(
                                         "w-5 h-5 md:w-6 md:h-6 rounded-full border border-gray-200 relative transition-transform duration-200 hover:scale-110",
                                         isSelected ? "ring-2 ring-brand-black ring-offset-1" : ""
@@ -156,6 +170,7 @@ const ProductCard = ({ product }) => {
                             <button
                                 key={size}
                                 onClick={() => setSelectedSize(size)}
+                                disabled={isSoldOut}
                                 className={clsx(
                                     "px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-medium border transition-colors",
                                     selectedSize === size
@@ -171,14 +186,17 @@ const ProductCard = ({ product }) => {
 
                 <button
                     onClick={handleAddToCart}
+                    disabled={isSoldOut || cartFull}
                     className={clsx(
-                        "w-full py-2 md:py-3 text-[10px] md:text-sm tracking-wider md:tracking-widest uppercase font-medium transition-all duration-300 border border-brand-black",
-                        isAdded
-                            ? "bg-green-600 text-white border-green-600"
-                            : "bg-brand-black text-white hover:bg-white hover:text-brand-black"
+                        "w-full py-2 md:py-3 text-[10px] md:text-sm tracking-wider md:tracking-widest uppercase font-medium transition-all duration-300 border",
+                        isSoldOut || cartFull
+                            ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
+                            : isAdded
+                                ? "bg-green-600 text-white border-green-600"
+                                : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
                     )}
                 >
-                    {isAdded ? "Added" : "Add to Cart"}
+                    {isSoldOut ? "Sold Out" : cartFull ? "All in Cart" : isAdded ? "Added" : "Add to Cart"}
                 </button>
             </div>
         </div>

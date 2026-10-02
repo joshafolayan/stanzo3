@@ -110,12 +110,15 @@ const PaymentModal = ({ isOpen, onClose }) => {
             }
             message += `\n*Order Details:*\n`;
             cart.forEach((item, index) => {
-                message += `${index + 1}. ${item.name}`;
+                const qty = item.quantity || 1;
+                message += `${index + 1}. ${qty > 1 ? `${qty}x ` : ''}${item.name}`;
                 if (item.selectedColor) message += ` - Color: ${item.selectedColor}`;
                 if (item.selectedSize) message += `, Size: ${item.selectedSize}`;
-                message += ` - #${item.price.toLocaleString()}\n`;
+                message += ` - #${item.price.toLocaleString()}${qty > 1 ? ' each' : ''}\n`;
             });
-            message += `\n*Total Amount:* #${cartTotal.toLocaleString()}\n\n`;
+            // Use the server's total so the message always matches the recorded order
+            const totalAmount = response.data.totalAmount ?? cartTotal;
+            message += `\n*Total Amount:* #${totalAmount.toLocaleString()}\n\n`;
             message += `I've transferred the amount to your account. Please confirm receipt. Thank you!`;
 
             const encodedMessage = encodeURIComponent(message);
@@ -132,7 +135,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
 
         } catch (err) {
             console.error('Checkout error:', err);
-            setError('Failed to record order. Please try again.');
+            setError(err.response?.data?.message || 'Failed to record order. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

@@ -34,9 +34,11 @@ const productSchema = new mongoose.Schema({
     sizes: [String],
     description: String,
     category: String,
-    stock: {
+    // Units available. null/missing = stock not tracked (always purchasable).
+    stockQuantity: {
         type: Number,
-        default: 0
+        min: 0,
+        default: null
     }
 }, {
     timestamps: true

@@ -3,9 +3,125 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 const User = require('../models/User');
 const { protect, admin } = require('../middleware/auth');
 const { uploadCloud, cloudinary } = require('../config/cloudinary');
+
+const DEFAULT_CATEGORIES = ['Bags', 'Shoes', 'Accessories', 'Clothing'];
+
+// Delete an image from Cloudinary given its URL (non-Cloudinary paths are ignored)
+const destroyCloudinaryImage = async (imgUrl) => {
+    // Cloudinary URL format: https://res.cloudinary.com/.../image/upload/v1234/stanzo3_products/filename.jpg
+    const urlParts = imgUrl.split('/');
+    const filename = urlParts[urlParts.length - 1];
+    const publicId = filename.split('.')[0];
+    if (publicId && imgUrl.includes('res.cloudinary.com')) {
+        try {
+            await cloudinary.uploader.destroy(`stanzo3_products/${publicId}`);
+        } catch (err) {
+            console.error('Failed to delete image from Cloudinary:', err);
+        }
+    }
+};
+
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Normalise stockQuantity from the admin form: blank/null = not tracked, otherwise a whole number >= 0
+const parseStockQuantity = (value) => {
+    if (value === undefined) return undefined;
+    if (value === null || value === '') return null;
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 0) throw new Error('Stock quantity must be a whole number of 0 or more');
+    return n;
+};
+
+// GET /api/admin/categories - List categories (seeds defaults + existing product categories on first use)
+router.get('/categories', protect, admin, async (req, res) => {
+    try {
+        if (await Category.countDocuments() === 0) {
+            const used = await Product.distinct('category');
+            const names = [...new Set([...DEFAULT_CATEGORIES, ...used.filter(Boolean)])];
+            await Category.insertMany(names.map(name => ({ name })), { ordered: false }).catch(() => {});
+        }
+        const categories = await Category.find({}).sort({ name: 1 }).lean();
+        const counts = await Product.aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }]);
+        const countMap = Object.fromEntries(counts.map(c => [c._id, c.count]));
+        res.json(categories.map(c => ({ ...c, productCount: countMap[c.name] || 0 })));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error fetching categories' });
+    }
+});
+
+// POST /api/admin/categories - Create category
+router.post('/categories', protect, admin, async (req, res) => {
+    try {
+        const name = (req.body.name || '').trim();
+        if (!name) {
+            return res.status(400).json({ message: 'Category name is required' });
+        }
+        const exists = await Category.findOne({ name: new RegExp(`^${escapeRegex(name)}$`, 'i') });
+        if (exists) {
+            return res.status(400).json({ message: 'Category already exists' });
+        }
+        const category = await Category.create({ name });
+        res.status(201).json(category);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error creating category' });
+    }
+});
+
+// PUT /api/admin/categories/:id - Rename category (also updates products using it)
+router.put('/categories/:id', protect, admin, async (req, res) => {
+    try {
+        const name = (req.body.name || '').trim();
+        if (!name) {
+            return res.status(400).json({ message: 'Category name is required' });
+        }
+        const category = await Category.findById(req.params.id);
+        if (!category) {
+            return res.status(404).json({ message: 'Category not found' });
+        }
+        const duplicate = await Category.findOne({
+            _id: { $ne: category._id },
+            name: new RegExp(`^${escapeRegex(name)}$`, 'i')
+        });
+        if (duplicate) {
+            return res.status(400).json({ message: 'Category already exists' });
+        }
+
+        const oldName = category.name;
+        category.name = name;
+        await category.save();
+        await Product.updateMany({ category: oldName }, { category: name });
+
+        res.json(category);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error updating category' });
+    }
+});
+
+// DELETE /api/admin/categories/:id - Delete category (only if no products use it)
+router.delete('/categories/:id', protect, admin, async (req, res) => {
+    try {
+        const category = await Category.findById(req.params.id);
+        if (!category) {
+            return res.status(404).json({ message: 'Category not found' });
+        }
+        const inUse = await Product.countDocuments({ category: category.name });
+        if (inUse > 0) {
+            return res.status(400).json({ message: `Cannot delete: ${inUse} product(s) still use this category` });
+        }
+        await category.deleteOne();
+        res.json({ message: 'Category removed' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error deleting category' });
+    }
+});
 
 // GET /api/admin/products - Get all products (protected not strictly necessary but good practice for admin view if it had sensitive info)
 router.get('/products', protect, admin, async (req, res) => {
@@ -46,6 +162,21 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
             return res.status(400).json({ message: 'Cannot update an already delivered order.' });
         }
 
+        // Cancelling puts the items back in stock; un-cancelling takes them out again
+        const { reserveStock, releaseStock } = require('../utils/stock');
+        if (status === 'cancelled' && existingOrder.status !== 'cancelled') {
+            await releaseStock(existingOrder.items);
+        } else if (existingOrder.status === 'cancelled' && status !== 'cancelled') {
+            try {
+                await reserveStock(existingOrder.items);
+            } catch (err) {
+                if (err.isStockError) {
+                    return res.status(400).json({ message: `Cannot reopen this order: ${err.message.replace(/ Please.*$/, '')}` });
+                }
+                throw err;
+            }
+        }
+
         existingOrder.status = status;
         existingOrder.processedBy = req.user.username;
         const updatedOrder = await existingOrder.save();
@@ -61,6 +192,11 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
 router.post('/products', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
     try {
         const productData = JSON.parse(req.body.productData); // Expecting JSON string for data part
+        try {
+            productData.stockQuantity = parseStockQuantity(productData.stockQuantity);
+        } catch (err) {
+            return res.status(400).json({ message: err.message });
+        }
 
         if (req.files && req.files.length > 0) {
             productData.images = req.files.map(file => file.path); // Cloudinary URL
@@ -86,10 +222,27 @@ router.put('/products/:id', protect, admin, uploadCloud.array('images', 5), asyn
     try {
         const id = parseInt(req.params.id);
         const productData = JSON.parse(req.body.productData);
+        try {
+            productData.stockQuantity = parseStockQuantity(productData.stockQuantity);
+        } catch (err) {
+            return res.status(400).json({ message: err.message });
+        }
 
-        if (req.files && req.files.length > 0) {
-            // For simplicity, if new files are uploaded, we replace the old ones. 
-            productData.images = req.files.map(file => file.path); // Cloudinary URL
+        const existing = await Product.findOne({ id: id });
+        if (!existing) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // productData.images = existing images the admin kept (in display order); new uploads are appended
+        const keptImages = Array.isArray(productData.images)
+            ? productData.images.filter(img => existing.images.includes(img))
+            : existing.images;
+        const newImages = (req.files || []).map(file => file.path); // Cloudinary URL
+        productData.images = [...keptImages, ...newImages];
+
+        const removedImages = existing.images.filter(img => !keptImages.includes(img));
+        for (const imgUrl of removedImages) {
+            await destroyCloudinaryImage(imgUrl);
         }
 
         const updatedProduct = await Product.findOneAndUpdate(
@@ -120,20 +273,8 @@ router.delete('/products/:id', protect, admin, async (req, res) => {
         }
 
         // Delete image file from Cloudinary 
-        if (product.images && product.images.length > 0) {
-            for (const imgUrl of product.images) {
-                // Cloudinary URL format: https://res.cloudinary.com/.../image/upload/v1234/stanzo3_products/filename.jpg
-                const urlParts = imgUrl.split('/');
-                const filename = urlParts[urlParts.length - 1];
-                const publicId = filename.split('.')[0];
-                if (publicId && imgUrl.includes('res.cloudinary.com')) {
-                    try {
-                        await cloudinary.uploader.destroy(`stanzo3_products/${publicId}`);
-                    } catch (err) {
-                        console.error('Failed to delete image from Cloudinary:', err);
-                    }
-                }
-            }
+        for (const imgUrl of product.images || []) {
+            await destroyCloudinaryImage(imgUrl);
         }
         
         await Product.findOneAndDelete({ id: id });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Package, LogOut, Users, Key } from 'lucide-react';
+import { LayoutDashboard, Package, LogOut, Users, Key, Tags } from 'lucide-react';
 import clsx from 'clsx';
 import Logo from '../Logo';
 
@@ -15,6 +15,7 @@ const AdminLayout = () => {
 
     const navItems = [
         { label: 'Products', icon: Package, path: '/admin/products' },
+        { label: 'Categories', icon: Tags, path: '/admin/categories' },
         { label: 'Orders', icon: LayoutDashboard, path: '/admin/orders' },
         ...(user?.role === 'admin' || user?.role === 'superadmin' 
             ? [{ label: 'Users', icon: Users, path: '/admin/users' }] 

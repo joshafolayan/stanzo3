@@ -4,7 +4,7 @@ import { X, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 
 const CartModal = ({ onCheckout }) => {
-    const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal } = useCart();
+    const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, getMaxQuantity, cartTotal } = useCart();
 
     if (!isCartOpen) return null;
 
@@ -46,7 +46,10 @@ const CartModal = ({ onCheckout }) => {
                             </button>
                         </div>
                     ) : (
-                        cart.map((item) => (
+                        cart.map((item) => {
+                            const maxQty = getMaxQuantity(item); // null = unlimited
+                            const atMax = maxQty !== null && (item.quantity || 1) >= maxQty;
+                            return (
                             <div key={item.cartId} className="flex gap-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
                                 <img
                                     src={item.images && item.images.length > 0 ? item.images[0] : (item.image || '/placeholder.jpg')}
@@ -106,10 +109,13 @@ const CartModal = ({ onCheckout }) => {
                                             />
                                             <button
                                                 onClick={() => updateQuantity(item.cartId, (item.quantity || 1) + 1)}
-                                                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-colors font-bold text-lg leading-none"
+                                                disabled={atMax}
+                                                title={atMax ? 'No more in stock' : undefined}
+                                                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-colors font-bold text-lg leading-none disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-gray-300 disabled:hover:text-gray-600 disabled:cursor-not-allowed"
                                             >
                                                 +
                                             </button>
+                                            {atMax && <span className="text-[10px] text-red-500 ml-1">Max</span>}
                                         </div>
 
                                         {/* Price + remove */}
@@ -135,7 +141,8 @@ const CartModal = ({ onCheckout }) => {
                                     </div>
                                 </div>
                             </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 

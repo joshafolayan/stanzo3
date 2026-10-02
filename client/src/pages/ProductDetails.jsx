@@ -10,7 +10,7 @@ import { getImageUrl } from '../utils/image';
 const ProductDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { addToCart } = useCart();
+    const { addToCart, getRemainingStock } = useCart();
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -48,7 +48,13 @@ const ProductDetails = () => {
         ? product.images.map(getImageUrl)
         : [getImageUrl(product.image)];
 
+    const isSoldOut = product.stockQuantity !== null && product.stockQuantity !== undefined && product.stockQuantity <= 0;
+    const remaining = getRemainingStock(product); // null = not tracked
+    const isLowStock = !isSoldOut && product.stockQuantity > 0 && product.stockQuantity <= 5;
+    const cartFull = !isSoldOut && remaining !== null && remaining < 1;
+
     const handleAddToCart = () => {
+        if (isSoldOut || cartFull) return;
         addToCart(product, selectedColor?.name, selectedSize);
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000);
@@ -70,7 +76,10 @@ const ProductDetails = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
                     {/* Left Column: Image Gallery */}
                     <div className="space-y-4">
-                        <div className="aspect-[4/5] relative bg-gray-50 overflow-hidden group z-0 hover:z-10 product-pop-frame product-pop-soft">
+                        <div className={clsx("aspect-[4/5] relative bg-gray-50 overflow-hidden group z-0 hover:z-10 product-pop-frame product-pop-soft", isSoldOut && "opacity-60 grayscale")}>
+                            {isSoldOut && (
+                                <span className="absolute top-4 left-4 z-10 bg-brand-black text-brand-white text-xs font-bold px-3 py-1 rounded-full tracking-wider uppercase">Sold Out</span>
+                            )}
                             {/* Cropped fill at rest, cross-fades to the full
                                 uncropped shot while the frame pops out on hover */}
                             <img
@@ -125,7 +134,7 @@ const ProductDetails = () => {
                     <div className="flex flex-col pt-4 lg:pt-10">
                         <h1 className="text-4xl md:text-5xl font-serif text-brand-black mb-4">{product.name}</h1>
 
-                        <div className="text-xl mb-8">
+                        <div className={clsx("text-xl", isLowStock || isSoldOut ? "mb-2" : "mb-8")}>
                             {product.discountPercentage > 0 && (
                                 <span className="line-through text-gray-400 mr-3">#{product.price.toLocaleString()}</span>
                             )}
@@ -133,6 +142,9 @@ const ProductDetails = () => {
                                 #{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()}
                             </span>
                         </div>
+
+                        {isSoldOut && <p className="text-sm font-medium text-red-600 mb-8 uppercase tracking-widest">Sold out</p>}
+                        {isLowStock && <p className="text-sm font-medium text-red-600 mb-8">Only {product.stockQuantity} left in stock</p>}
 
                         {/* Colors */}
                         {product.colors && product.colors.length > 0 && (
@@ -148,6 +160,7 @@ const ProductDetails = () => {
                                         <button
                                             key={`${color.hex}-${color.name}-${idx}`}
                                             onClick={() => setSelectedColor(color)}
+                                            disabled={isSoldOut}
                                             className={clsx(
                                                 "w-10 h-10 rounded-full border border-gray-200 relative transition-transform hover:scale-110",
                                                 selectedColor?.hex === color.hex && selectedColor?.name === color.name ? "ring-2 ring-brand-black ring-offset-2" : ""
@@ -175,6 +188,7 @@ const ProductDetails = () => {
                                         <button
                                             key={size}
                                             onClick={() => setSelectedSize(size)}
+                                            disabled={isSoldOut}
                                             className={clsx(
                                                 "px-6 py-3 text-sm font-medium border transition-colors",
                                                 selectedSize === size
@@ -191,14 +205,17 @@ const ProductDetails = () => {
 
                         <button
                             onClick={handleAddToCart}
+                            disabled={isSoldOut || cartFull}
                             className={clsx(
-                                "w-full py-4 text-sm tracking-[0.2em] uppercase font-bold transition-all duration-300 border border-brand-black",
-                                isAdded
-                                    ? "bg-green-600 text-white border-green-600"
-                                    : "bg-brand-black text-white hover:bg-white hover:text-brand-black"
+                                "w-full py-4 text-sm tracking-[0.2em] uppercase font-bold transition-all duration-300 border",
+                                isSoldOut || cartFull
+                                    ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
+                                    : isAdded
+                                        ? "bg-green-600 text-white border-green-600"
+                                        : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
                             )}
                         >
-                            {isAdded ? "Added to Cart" : "Add to Cart"}
+                            {isSoldOut ? "Sold Out" : cartFull ? "All Available Stock in Cart" : isAdded ? "Added to Cart" : "Add to Cart"}
                         </button>
 
                         {product.description && (

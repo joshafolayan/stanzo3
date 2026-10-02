@@ -7,7 +7,8 @@ const orderItemSchema = new mongoose.Schema({
         required: true
     },
     name: { type: String, required: true },
-    price: { type: Number, required: true },
+    price: { type: Number, required: true }, // unit price paid, after discount
+    originalPrice: { type: Number }, // unit price before discount
     quantity: { type: Number, required: true, default: 1 },
     selectedColor: { type: String },
     selectedSize: { type: String }

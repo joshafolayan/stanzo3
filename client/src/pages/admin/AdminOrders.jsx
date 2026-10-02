@@ -45,7 +45,7 @@ const AdminOrders = () => {
         } catch (err) {
             console.error('Failed to update status:', err);
             // Optionally could add a toast here
-            alert('Failed to update order status');
+            alert(err.response?.data?.message || 'Failed to update order status');
         } finally {
             setUpdatingOrderId(null);
         }

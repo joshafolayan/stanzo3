@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const { protect, SECRET_KEY } = require('../middleware/auth');
 const User = require('../models/User');
 const { sendOrderConfirmationEmail, sendNewOrderAdminEmail } = require('../utils/email');
+const { reserveStock, releaseStock } = require('../utils/stock');
 
 // GET /api/products - Get all products
 router.get('/products', async (req, res) => {
@@ -38,6 +39,54 @@ router.post('/checkout', async (req, res) => {
             }
         }
 
+        // Verify prices and calculate total securely
+        let calculatedTotal = 0;
+        const processedItems = [];
+
+        for (const item of cart) {
+            // Find the actual product in DB by ID
+            // Handle both legacy numeric id or new _id (frontend passes _id often as id)
+            // Looking at the frontend cart, it uses item.id or item._id.
+            const query = item._id ? { _id: item._id } : { id: item.id };
+            const dbProduct = await Product.findOne(query);
+
+            if (!dbProduct) {
+                return res.status(404).json({ success: false, message: `Product ${item.name} not found` });
+            }
+
+            const quantity = Number(item.quantity || 1);
+            if (!Number.isInteger(quantity) || quantity < 1) {
+                return res.status(400).json({ success: false, message: `Invalid quantity for ${dbProduct.name}` });
+            }
+
+            // Apply the product's discount (must match the price shown in the cart - see CartContext)
+            const discount = dbProduct.discountPercentage || 0;
+            const unitPrice = Math.round(dbProduct.price * (1 - discount / 100) * 100) / 100;
+
+            const itemTotal = unitPrice * quantity;
+            calculatedTotal += itemTotal;
+
+            processedItems.push({
+                product: dbProduct._id,
+                name: dbProduct.name,
+                price: unitPrice,
+                originalPrice: dbProduct.price,
+                quantity,
+                selectedColor: item.selectedColor,
+                selectedSize: item.selectedSize
+            });
+        }
+
+        // Take the items out of stock (fails if anything sold out meanwhile)
+        try {
+            await reserveStock(processedItems);
+        } catch (err) {
+            if (err.isStockError) {
+                return res.status(400).json({ success: false, message: err.message });
+            }
+            throw err;
+        }
+
         // Auto-Register Guest
         if (!userId && customerInfo && customerInfo.password && customerInfo.email && customerInfo.name) {
             try {
@@ -50,6 +99,7 @@ router.post('/checkout', async (req, res) => {
                 });
 
                 if (existingUser) {
+                    await releaseStock(processedItems);
                     return res.status(400).json({ success: false, message: 'Account with this email or username already exists. Please log in.' });
                 }
 
@@ -66,36 +116,9 @@ router.post('/checkout', async (req, res) => {
                 userId = savedUser._id;
             } catch (err) {
                 console.error('Auto-registration error:', err);
+                await releaseStock(processedItems);
                 return res.status(500).json({ success: false, message: 'Server error during account creation.' });
             }
-        }
-
-        // Verify prices and calculate total securely
-        let calculatedTotal = 0;
-        const processedItems = [];
-
-        for (const item of cart) {
-            // Find the actual product in DB by ID
-            // Handle both legacy numeric id or new _id (frontend passes _id often as id)
-            // Looking at the frontend cart, it uses item.id or item._id.
-            const query = item._id ? { _id: item._id } : { id: item.id };
-            const dbProduct = await Product.findOne(query);
-
-            if (!dbProduct) {
-                return res.status(404).json({ success: false, message: `Product ${item.name} not found` });
-            }
-
-            const itemTotal = dbProduct.price * (item.quantity || 1);
-            calculatedTotal += itemTotal;
-
-            processedItems.push({
-                product: dbProduct._id,
-                name: dbProduct.name,
-                price: dbProduct.price,
-                quantity: item.quantity || 1,
-                selectedColor: item.selectedColor,
-                selectedSize: item.selectedSize
-            });
         }
 
         const newOrder = new Order({
@@ -107,7 +130,13 @@ router.post('/checkout', async (req, res) => {
             status: 'pending'
         });
 
-        const savedOrder = await newOrder.save();
+        let savedOrder;
+        try {
+            savedOrder = await newOrder.save();
+        } catch (err) {
+            await releaseStock(processedItems);
+            throw err;
+        }
 
         // Send Email Notifications
         try {

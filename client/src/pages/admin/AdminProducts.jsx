@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { Plus, Edit, Trash2, X, Upload } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Edit, Trash2, X, Star } from 'lucide-react';
 import { getImageUrl } from '../../utils/image';
 import { getNearestColorName } from '../../utils/colors';
 
@@ -11,13 +12,18 @@ const AdminProducts = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [categories, setCategories] = useState([]);
+    const [existingImages, setExistingImages] = useState([]); // URLs already saved on the product
+    const [newImages, setNewImages] = useState([]); // { file, preview } selected but not yet uploaded
     const itemsPerPage = 10;
+    const MAX_NEW_IMAGES = 5;
 
     const { register, control, handleSubmit, reset, setValue, watch } = useForm({
         defaultValues: {
             name: '',
             price: '',
             discountPercentage: '',
+            stockQuantity: '',
             category: 'Bags',
             colors: [{ name: '', hex: '' }],
             sizes: []
@@ -38,9 +44,52 @@ const AdminProducts = () => {
         }
     };
 
+    const fetchCategories = async () => {
+        try {
+            const { data } = await axios.get('/api/admin/categories');
+            setCategories(data.map(c => c.name));
+        } catch (error) {
+            console.error('Failed to fetch categories', error);
+        }
+    };
+
     useEffect(() => {
         fetchProducts();
+        fetchCategories();
     }, []);
+
+    const clearNewImages = () => {
+        setNewImages(prev => {
+            prev.forEach(img => URL.revokeObjectURL(img.preview));
+            return [];
+        });
+    };
+
+    const handleImageSelect = (e) => {
+        const files = Array.from(e.target.files || []);
+        e.target.value = ''; // allow re-selecting the same file
+        const room = MAX_NEW_IMAGES - newImages.length;
+        if (files.length > room) {
+            alert(`You can upload up to ${MAX_NEW_IMAGES} new images at a time.`);
+        }
+        const added = files.slice(0, Math.max(room, 0)).map(file => ({ file, preview: URL.createObjectURL(file) }));
+        setNewImages(prev => [...prev, ...added]);
+    };
+
+    const removeNewImage = (index) => {
+        setNewImages(prev => {
+            URL.revokeObjectURL(prev[index].preview);
+            return prev.filter((_, i) => i !== index);
+        });
+    };
+
+    const removeExistingImage = (index) => {
+        setExistingImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const makeCoverImage = (index) => {
+        setExistingImages(prev => [prev[index], ...prev.filter((_, i) => i !== index)]);
+    };
 
     // Calculate pagination
     const indexOfLast = currentPage * itemsPerPage;
@@ -62,17 +111,17 @@ const AdminProducts = () => {
             name: data.name,
             price: Number(data.price),
             discountPercentage: data.discountPercentage ? Number(data.discountPercentage) : 0,
+            stockQuantity: data.stockQuantity === '' || data.stockQuantity === null ? null : Number(data.stockQuantity), // blank = not tracked
             category: data.category,
             colors: data.colors,
             sizes: sizesArray
         };
+        if (editingProduct) {
+            productPayload.images = existingImages; // images kept; anything left out gets deleted
+        }
 
         formData.append('productData', JSON.stringify(productPayload));
-        if (data.images && data.images.length > 0) {
-            for (let i = 0; i < data.images.length; i++) {
-                formData.append('images', data.images[i]);
-            }
-        }
+        newImages.forEach(img => formData.append('images', img.file));
 
         try {
             if (editingProduct) {
@@ -84,7 +133,7 @@ const AdminProducts = () => {
             closeModal();
         } catch (error) {
             console.error('Error saving product', error);
-            alert('Failed to save product');
+            alert(error.response?.data?.message || 'Failed to save product');
         } finally {
             setIsSubmitting(false);
         }
@@ -103,22 +152,30 @@ const AdminProducts = () => {
 
     const openModal = (product = null) => {
         setEditingProduct(product);
+        clearNewImages();
+        fetchCategories();
         if (product) {
-            setValue('name', product.name);
-            setValue('price', product.price);
-            setValue('discountPercentage', product.discountPercentage || '');
-            setValue('category', product.category || 'Bags');
-            setValue('colors', product.colors);
-            setValue('sizes', product.sizes.join(', ')); // Simple text edit for sizes
+            reset({
+                name: product.name,
+                price: product.price,
+                discountPercentage: product.discountPercentage || '',
+                stockQuantity: product.stockQuantity ?? '',
+                category: product.category || categories[0] || '',
+                colors: product.colors,
+                sizes: product.sizes.join(', ') // Simple text edit for sizes
+            });
+            setExistingImages(product.images || []);
         } else {
             reset({
                 name: '',
                 price: '',
                 discountPercentage: '',
-                category: 'Bags',
+                stockQuantity: '',
+                category: categories[0] || '',
                 colors: [{ name: 'Black', hex: '#000000' }],
                 sizes: ''
             });
+            setExistingImages([]);
         }
         setIsModalOpen(true);
     };
@@ -126,6 +183,8 @@ const AdminProducts = () => {
     const closeModal = () => {
         setIsModalOpen(false);
         setEditingProduct(null);
+        setExistingImages([]);
+        clearNewImages();
         reset();
     };
 
@@ -151,6 +210,7 @@ const AdminProducts = () => {
                             <th className="p-4 font-semibold text-gray-600">Image</th>
                             <th className="p-4 font-semibold text-gray-600">Name</th>
                             <th className="p-4 font-semibold text-gray-600">Price</th>
+                            <th className="p-4 font-semibold text-gray-600">Stock</th>
                             <th className="p-4 font-semibold text-gray-600">Variants</th>
                             <th className="p-4 font-semibold text-gray-600 text-right">Actions</th>
                         </tr>
@@ -166,6 +226,15 @@ const AdminProducts = () => {
                                     <div className="text-xs text-gray-500 font-normal mt-1">{product.category || 'Uncategorized'}</div>
                                 </td>
                                 <td className="p-4 text-gray-600">#{product.price.toLocaleString()}</td>
+                                <td className="p-4 text-sm">
+                                    {product.stockQuantity === null || product.stockQuantity === undefined ? (
+                                        <span className="text-gray-400">Not tracked</span>
+                                    ) : product.stockQuantity <= 0 ? (
+                                        <span className="bg-red-50 text-red-700 font-semibold px-2 py-0.5 rounded">Sold out</span>
+                                    ) : (
+                                        <span className={product.stockQuantity <= 5 ? 'text-amber-600 font-semibold' : 'text-gray-700'}>{product.stockQuantity} left</span>
+                                    )}
+                                </td>
                                 <td className="p-4 text-sm text-gray-500">
                                     {product.colors.length} colors, {product.sizes.length} sizes
                                 </td>
@@ -267,19 +336,65 @@ const AdminProducts = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Category</label>
+                                <label className="block text-sm font-medium mb-1">Quantity in Stock</label>
+                                <input type="number" min="0" step="1" {...register('stockQuantity', { min: 0 })} placeholder="Leave blank to not track stock" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                <p className="text-xs text-gray-400 mt-1">Goes down automatically when customers order. At 0 the product shows as sold out.</p>
+                            </div>
+
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium">Category</label>
+                                    <Link to="/admin/categories" className="text-xs text-blue-600 hover:underline">Manage categories</Link>
+                                </div>
                                 <select {...register('category', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                                    <option value="Bags">Bags</option>
-                                    <option value="Shoes">Shoes</option>
-                                    <option value="Accessories">Accessories</option>
-                                    <option value="Clothing">Clothing</option>
+                                    <option value="" disabled>Select a category</option>
+                                    {/* Keep the product's current category selectable even if it was removed from the list */}
+                                    {editingProduct?.category && !categories.includes(editingProduct.category) && (
+                                        <option value={editingProduct.category}>{editingProduct.category}</option>
+                                    )}
+                                    {categories.map(name => (
+                                        <option key={name} value={name}>{name}</option>
+                                    ))}
                                 </select>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium mb-1">Product Images</label>
+                                {(existingImages.length > 0 || newImages.length > 0) && (
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-3">
+                                        {existingImages.map((img, index) => (
+                                            <div key={img} className="relative group aspect-square rounded-lg overflow-hidden border bg-gray-100">
+                                                <img src={getImageUrl(img)} alt={`Product ${index + 1}`} className="w-full h-full object-cover" />
+                                                {index === 0 && (
+                                                    <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">Cover</span>
+                                                )}
+                                                <button type="button" onClick={() => removeExistingImage(index)} title="Remove image" className="absolute top-1 right-1 bg-white/90 text-red-600 rounded-full p-1 shadow hover:bg-red-50">
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                                {index > 0 && (
+                                                    <button type="button" onClick={() => makeCoverImage(index)} title="Make cover image" className="absolute top-1 left-1 bg-white/90 text-gray-600 rounded-full p-1 shadow hover:text-blue-600">
+                                                        <Star className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {newImages.map((img, index) => (
+                                            <div key={img.preview} className="relative aspect-square rounded-lg overflow-hidden border-2 border-dashed border-blue-400 bg-gray-100">
+                                                <img src={img.preview} alt={img.file.name} className="w-full h-full object-cover" />
+                                                <span className="absolute bottom-1 left-1 bg-green-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">New</span>
+                                                <button type="button" onClick={() => removeNewImage(index)} title="Remove image" className="absolute top-1 right-1 bg-white/90 text-red-600 rounded-full p-1 shadow hover:bg-red-50">
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {editingProduct && existingImages.length < (editingProduct.images?.length || 0) && (
+                                    <p className="text-xs text-amber-600 mb-2">Removed images will be deleted when you save.</p>
+                                )}
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition">
-                                    <input type="file" {...register('images')} multiple accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                    <input type="file" onChange={handleImageSelect} multiple accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                    <p className="text-xs text-gray-400 mt-2">Up to {MAX_NEW_IMAGES} new images per save. New images are added after existing ones.</p>
                                 </div>
                             </div>
 
