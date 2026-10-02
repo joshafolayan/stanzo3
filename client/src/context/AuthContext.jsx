@@ -80,9 +80,9 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
-    const updateProfile = async (email) => {
+    const updateProfile = async (email, currentPassword) => {
         try {
-            const { data } = await axios.put('/api/auth/profile', { email });
+            const { data } = await axios.put('/api/auth/profile', { email, currentPassword });
             localStorage.setItem('user', JSON.stringify(data.user));
             setUser(data.user);
             return { success: true, user: data.user };

@@ -25,7 +25,9 @@ const renderOrderItems = (items) => items.map(item =>
 
 const sendResetEmail = async (email, resetToken, role = 'user') => {
     try {
-        const resetUrl = `${process.env.CLIENT_URL || 'https://allroundstores.com'}${role === 'admin' ? '/admin' : ''}/reset-password?token=${resetToken}`;
+        // All staff roles use the admin reset page; customers use the storefront one
+        const isStaff = ['admin', 'manager', 'salesrep', 'superadmin'].includes(role);
+        const resetUrl = `${process.env.CLIENT_URL || 'https://allroundstores.com'}${isStaff ? '/admin' : ''}/reset-password?token=${resetToken}`;
 
         const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = sender;

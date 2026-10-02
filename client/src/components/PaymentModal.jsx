@@ -67,6 +67,10 @@ const PaymentModal = ({ isOpen, onClose }) => {
             setError('Please provide an email and password to create an account.');
             return;
         }
+        if (!user && customerInfo.password.trim().length < 6) {
+            setError('Your password must be at least 6 characters.');
+            return;
+        }
         if (deliveryMethod === 'delivery') {
             if (!selectedState) {
                 setError('Please select your delivery state.');
@@ -245,7 +249,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                             name="password"
                                             value={customerInfo.password}
                                             onChange={handleChange}
-                                            placeholder="Create a password for your account"
+                                            placeholder="At least 6 characters"
                                             className="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         />
                                     </div>

@@ -9,21 +9,40 @@ const { sendResetEmail } = require('../utils/email');
 
 const { v4: uuidv4 } = require('uuid');
 
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 requests per windowMs
-    message: { message: 'Too many attempts from this IP, please try again after 15 minutes' }
+// Separate limits per action, so e.g. a couple of logins don't block a password reset
+const makeLimiter = (windowMinutes, max, extra = {}) => rateLimit({
+    windowMs: windowMinutes * 60 * 1000,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: `Too many attempts. Please try again in ${windowMinutes} minutes.` },
+    ...extra
 });
+const loginLimiter = makeLimiter(15, 10, { skipSuccessfulRequests: true }); // only failed logins count
+const registerLimiter = makeLimiter(60, 10);
+const forgotPasswordLimiter = makeLimiter(15, 5);
+const resetPasswordLimiter = makeLimiter(15, 10);
+
+const MIN_PASSWORD_LENGTH = 6;
+const isNonEmptyString = (value) => typeof value === 'string' && value.trim() !== '';
 
 // POST /api/auth/register
-router.post('/register', authLimiter, async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
     try {
-        const { username, email, password, phone } = req.body;
+        const { password, phone } = req.body;
 
-        if (!username || !password) {
+        if (!isNonEmptyString(req.body.username) || typeof password !== 'string' || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
+        if (password.length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({ message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+        }
+        if ((req.body.email !== undefined && typeof req.body.email !== 'string') || (phone !== undefined && typeof phone !== 'string')) {
+            return res.status(400).json({ message: 'Invalid email or phone' });
+        }
 
+        const username = req.body.username.trim();
+        const email = req.body.email;
         const normalizedEmail = email && email.trim() ? email.trim().toLowerCase() : undefined;
 
         const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -66,9 +85,12 @@ router.post('/register', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', authLimiter, async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
+        if (!isNonEmptyString(username) || typeof password !== 'string') {
+            return res.status(400).json({ message: 'Username and password are required' });
+        }
 
         // Escape regex special characters to prevent ReDoS
         const escapedIdentifier = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -101,11 +123,14 @@ router.post('/login', authLimiter, async (req, res) => {
 // PUT /api/auth/profile
 router.put('/profile', protect, async (req, res) => {
     try {
-        const { email } = req.body;
-        const normalizedEmail = email && email.trim() ? email.trim().toLowerCase() : undefined;
+        const { email, currentPassword } = req.body;
+        const normalizedEmail = isNonEmptyString(email) ? email.trim().toLowerCase() : undefined;
 
         if (!normalizedEmail) {
             return res.status(400).json({ message: 'A valid email address is required' });
+        }
+        if (typeof currentPassword !== 'string' || !currentPassword) {
+            return res.status(400).json({ message: 'Please enter your current password to change your email' });
         }
 
         const existingUser = await User.findOne({ email: normalizedEmail, _id: { $ne: req.user.id } });
@@ -116,6 +141,11 @@ router.put('/profile', protect, async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
+        }
+        // Re-check the password so a stolen session can't change the email and then reset the password.
+        // 400 (not 401) so the frontend doesn't treat it as an expired session and log the user out.
+        if (!(await bcrypt.compare(currentPassword, user.password))) {
+            return res.status(400).json({ message: 'Current password is incorrect' });
         }
 
         user.email = normalizedEmail;
@@ -131,15 +161,15 @@ router.put('/profile', protect, async (req, res) => {
 });
 
 // POST /api/auth/forgot-password
-router.post('/forgot-password', authLimiter, async (req, res) => {
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
     try {
         const { email } = req.body;
 
-        if (!email) {
+        if (!isNonEmptyString(email)) {
             return res.status(400).json({ message: 'Email address is required.' });
         }
 
-        const user = await User.findOne({ email: email.toLowerCase() });
+        const user = await User.findOne({ email: email.trim().toLowerCase() });
 
         if (!user) {
             // Return success even if user not found to prevent enumeration
@@ -152,7 +182,7 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
 
         await user.save();
 
-        // Send actual email using nodemailer
+        // Send the reset email via Brevo
         const emailSent = await sendResetEmail(user.email, resetToken, user.role);
 
         if (!emailSent) {
@@ -171,9 +201,16 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/reset-password
-router.post('/reset-password', authLimiter, async (req, res) => {
+router.post('/reset-password', resetPasswordLimiter, async (req, res) => {
     try {
         const { token, newPassword } = req.body;
+
+        if (!isNonEmptyString(token)) {
+            return res.status(400).json({ message: 'Invalid or expired token' });
+        }
+        if (typeof newPassword !== 'string' || newPassword.length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({ message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+        }
 
         const user = await User.findOne({
             resetToken: token,

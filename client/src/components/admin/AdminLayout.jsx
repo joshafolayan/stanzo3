@@ -5,6 +5,8 @@ import { LayoutDashboard, Package, LogOut, Users, Key, Tags } from 'lucide-react
 import clsx from 'clsx';
 import Logo from '../Logo';
 
+const STAFF_ROLES = ['admin', 'manager', 'salesrep', 'superadmin'];
+
 const AdminLayout = () => {
     const { user, loading, logout } = useAuth();
     const location = useLocation();
@@ -12,6 +14,21 @@ const AdminLayout = () => {
 
     if (loading) return <div>Loading...</div>;
     if (!user) return <Navigate to="/admin/login" />;
+    if (!STAFF_ROLES.includes(user.role)) {
+        // Logged in as a customer - don't show the admin shell
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+                <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">No admin access</h2>
+                    <p className="text-gray-500 mb-6">You're signed in as <strong>{user.username}</strong>, which is a customer account.</p>
+                    <div className="flex gap-3 justify-center">
+                        <Link to="/" className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Back to shop</Link>
+                        <button onClick={logout} className="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800">Log out</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const navItems = [
         { label: 'Products', icon: Package, path: '/admin/products' },

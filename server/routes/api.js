@@ -44,6 +44,7 @@ const cleanCustomerInfo = (info) => {
         cleaned[field] = trimmed;
     }
     if (cleaned.email && !EMAIL_PATTERN.test(cleaned.email)) throw new Error('Please enter a valid email address');
+    if (cleaned.password && cleaned.password.length < 6) throw new Error('Password must be at least 6 characters');
     return cleaned;
 };
 
@@ -179,8 +180,8 @@ router.post('/checkout', checkoutLimiter, async (req, res) => {
         // Send Email Notifications
         try {
             // Find admins to notify
-            const admins = await User.find({ role: 'admin' });
-            const adminEmails = admins.filter(a => a.email).map(a => a.email).join(', ');
+            const admins = await User.find({ role: { $in: ['superadmin', 'admin', 'manager'] } });
+            const adminEmails = [...new Set(admins.filter(a => a.email).map(a => a.email))]; // one recipient per address
             
             // Send customer confirmation if email exists
             if (customerInfo && customerInfo.email) {
@@ -188,7 +189,7 @@ router.post('/checkout', checkoutLimiter, async (req, res) => {
             }
             
             // Send admin notification
-            if (adminEmails) {
+            if (adminEmails.length > 0) {
                 sendNewOrderAdminEmail(adminEmails, savedOrder).catch(err => console.error('Error sending admin email', err));
             }
         } catch (emailErr) {

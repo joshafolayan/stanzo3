@@ -101,8 +101,9 @@ const Register = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-black focus:border-brand-black outline-none transition-colors pr-12"
-                                    placeholder="Create a strong password"
+                                    placeholder="At least 6 characters"
                                     required
+                                    minLength={6}
                                 />
                                 <button
                                     type="button"

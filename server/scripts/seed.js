@@ -13,6 +13,14 @@ const USERS_FILE = path.join(__dirname, '../data/users.json');
 
 const seedData = async () => {
     try {
+        // This wipes ALL products - make sure nobody runs it against the live database by accident
+        if (!process.argv.includes('--yes-delete-all-products')) {
+            console.error('This script DELETES ALL PRODUCTS and replaces them with data/products.json.');
+            console.error(`Database: ${(process.env.MONGO_URI || 'mongodb://localhost:27017/stanzo3').replace(/\/\/[^@]*@/, '//***@')}`);
+            console.error('If you are sure, run: node scripts/seed.js --yes-delete-all-products');
+            process.exit(1);
+        }
+
         await connectDB();
 
         console.log('Clearing existing data...');

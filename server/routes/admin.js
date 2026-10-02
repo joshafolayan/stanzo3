@@ -30,6 +30,40 @@ const destroyCloudinaryImage = async (imgUrl) => {
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// Only these fields can be set from the product form; anything else (id, _id, timestamps...) is ignored
+const parseProductData = (raw) => {
+    let input;
+    try {
+        input = JSON.parse(raw);
+    } catch {
+        throw new Error('Invalid product data');
+    }
+    const data = {};
+    for (const field of ['name', 'category', 'description']) {
+        if (input[field] !== undefined) data[field] = String(input[field]).trim();
+    }
+    if (input.price !== undefined) {
+        data.price = Number(input.price);
+        if (!Number.isFinite(data.price) || data.price < 0) throw new Error('Price must be 0 or more');
+    }
+    if (input.discountPercentage !== undefined) {
+        data.discountPercentage = Number(input.discountPercentage) || 0;
+        if (data.discountPercentage < 0 || data.discountPercentage > 100) throw new Error('Discount must be between 0 and 100');
+    }
+    if (Array.isArray(input.colors)) {
+        data.colors = input.colors.map(c => ({ name: String(c?.name || '').trim(), hex: String(c?.hex || '') }));
+    }
+    if (Array.isArray(input.sizes)) {
+        data.sizes = input.sizes.map(s => String(s).trim()).filter(Boolean);
+    }
+    if (Array.isArray(input.images)) {
+        data.images = input.images.filter(img => typeof img === 'string');
+    }
+    data.stockQuantity = parseStockQuantity(input.stockQuantity);
+    if (data.stockQuantity === undefined) delete data.stockQuantity;
+    return data;
+};
+
 // Normalise stockQuantity from the admin form: blank/null = not tracked, otherwise a whole number >= 0
 const parseStockQuantity = (value) => {
     if (value === undefined) return undefined;
@@ -128,8 +162,13 @@ router.delete('/categories/:id', protect, admin, async (req, res) => {
 
 // GET /api/admin/products - Get all products (protected not strictly necessary but good practice for admin view if it had sensitive info)
 router.get('/products', protect, admin, async (req, res) => {
-    const products = await Product.find({});
-    res.json(products);
+    try {
+        const products = await Product.find({});
+        res.json(products);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error fetching products' });
+    }
 });
 
 // GET /api/admin/orders - Get all orders
@@ -214,22 +253,20 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
 // POST /api/admin/products - Create Product
 router.post('/products', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
     try {
-        const productData = JSON.parse(req.body.productData); // Expecting JSON string for data part
+        let productData;
         try {
-            productData.stockQuantity = parseStockQuantity(productData.stockQuantity);
+            productData = parseProductData(req.body.productData);
         } catch (err) {
             return res.status(400).json({ message: err.message });
         }
-
-        if (req.files && req.files.length > 0) {
-            productData.images = req.files.map(file => file.path); // Cloudinary URL
-        } else if (!productData.images) {
-            productData.images = [];
+        if (!productData.name || productData.price === undefined) {
+            return res.status(400).json({ message: 'Name and price are required' });
         }
+
+        productData.images = (req.files || []).map(file => file.path); // Cloudinary URLs
 
         // Generate numeric ID for compatibility
         // In a real app, use _id or a dedicated counter collection
-        const count = await Product.countDocuments();
         productData.id = Date.now(); // Simple unique numeric-like ID
 
         const newProduct = await Product.create(productData);
@@ -244,9 +281,9 @@ router.post('/products', protect, admin, uploadCloud.array('images', 5), async (
 router.put('/products/:id', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const productData = JSON.parse(req.body.productData);
+        let productData;
         try {
-            productData.stockQuantity = parseStockQuantity(productData.stockQuantity);
+            productData = parseProductData(req.body.productData);
         } catch (err) {
             return res.status(400).json({ message: err.message });
         }
@@ -271,7 +308,7 @@ router.put('/products/:id', protect, admin, uploadCloud.array('images', 5), asyn
         const updatedProduct = await Product.findOneAndUpdate(
             { id: id },
             productData,
-            { new: true }
+            { new: true, runValidators: true }
         );
 
         if (!updatedProduct) {
@@ -328,9 +365,20 @@ router.post('/users', protect, admin, async (req, res) => {
             return res.status(403).json({ message: 'Only an admin can create additional users' });
         }
 
-        const { username, password, role = 'admin' } = req.body;
+        const { password, role = 'admin' } = req.body;
+        const username = typeof req.body.username === 'string' ? req.body.username.trim() : '';
 
-        const userExists = await User.findOne({ username });
+        if (!username || typeof password !== 'string' || password.length < 6) {
+            return res.status(400).json({ message: 'Username and a password of at least 6 characters are required' });
+        }
+        if (!STAFF_ROLES.includes(role)) {
+            return res.status(400).json({ message: 'Invalid role' });
+        }
+        if (role === 'superadmin' && req.user.role !== 'superadmin') {
+            return res.status(403).json({ message: 'Only a superadmin can create a superadmin' });
+        }
+
+        const userExists = await User.findOne({ username: new RegExp(`^${escapeRegex(username)}$`, 'i') });
         if (userExists) {
             return res.status(400).json({ message: 'Username already exists' });
         }

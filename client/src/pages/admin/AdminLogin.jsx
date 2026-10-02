@@ -9,7 +9,7 @@ const AdminLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { login } = useAuth();
+    const { login, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -18,7 +18,10 @@ const AdminLogin = () => {
         setIsSubmitting(true);
         try {
             const result = await login(username, password);
-            if (result.success) {
+            if (result.success && !['admin', 'manager', 'salesrep', 'superadmin'].includes(result.user?.role)) {
+                logout();
+                setError("This account doesn't have admin access.");
+            } else if (result.success) {
                 navigate('/admin/products');
             } else {
                 setError(result.message);

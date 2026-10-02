@@ -16,6 +16,7 @@ const UserDashboard = () => {
     const [loadingOrders, setLoadingOrders] = useState(true);
 
     const [emailInput, setEmailInput] = useState('');
+    const [currentPassword, setCurrentPassword] = useState('');
     const [savingEmail, setSavingEmail] = useState(false);
     const [emailMessage, setEmailMessage] = useState(null);
 
@@ -27,8 +28,9 @@ const UserDashboard = () => {
         e.preventDefault();
         setEmailMessage(null);
         setSavingEmail(true);
-        const result = await updateProfile(emailInput.trim());
+        const result = await updateProfile(emailInput.trim(), currentPassword);
         setSavingEmail(false);
+        if (result.success) setCurrentPassword('');
         setEmailMessage(result.success
             ? { type: 'success', text: 'Email updated successfully.' }
             : { type: 'error', text: result.message });
@@ -304,6 +306,18 @@ const UserDashboard = () => {
                                         />
                                     </div>
 
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                                        <input
+                                            type="password"
+                                            value={currentPassword}
+                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                            placeholder="Confirm it's you"
+                                            autoComplete="current-password"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-black"
+                                        />
+                                    </div>
+
                                     {emailMessage && (
                                         <p className={`text-sm ${emailMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
                                             {emailMessage.text}
@@ -312,7 +326,7 @@ const UserDashboard = () => {
 
                                     <button
                                         type="submit"
-                                        disabled={savingEmail || emailInput.trim() === (user.email || '')}
+                                        disabled={savingEmail || !currentPassword || emailInput.trim() === (user.email || '')}
                                         className="px-6 py-2 bg-brand-black text-brand-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {savingEmail ? 'Saving...' : 'Save Email'}

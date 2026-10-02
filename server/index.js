@@ -31,8 +31,8 @@ app.use(mongoSanitize());
 // Global Rate Limiting
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again after 15 minutes',
+    max: 300, // limit each IP to 300 requests per windowMs (sensitive routes have their own, stricter limits)
+    message: { message: 'Too many requests from this network. Please try again in a few minutes.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
