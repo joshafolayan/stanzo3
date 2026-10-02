@@ -13,7 +13,7 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.11.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
@@ -25,10 +25,14 @@
     "mongoose": "^9.1.5",
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
-    "nodemailer": "^8.0.1",
     "nodemon": "^3.1.11",
-    "resend": "^6.9.3",
     "sib-api-v3-sdk": "^8.5.0",
     "uuid": "^13.0.0"
+  },
+  "overrides": {
+    "multer-storage-cloudinary": {
+      "cloudinary": "$cloudinary"
+    },
+    "qs": "^6.16.0"
   }
 }

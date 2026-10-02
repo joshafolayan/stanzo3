@@ -46,4 +46,19 @@ const reserveStock = async (items) => {
     }
 };
 
-module.exports = { reserveStock, releaseStock };
+// Check (without changing anything) that every tracked product has enough stock
+const checkStock = async (items) => {
+    for (const [productId, qty] of totalsByProduct(items)) {
+        const product = await Product.findById(productId);
+        if (!product || product.stockQuantity === null || product.stockQuantity === undefined) continue;
+        if (product.stockQuantity < qty) {
+            const err = new Error(product.stockQuantity > 0
+                ? `Only ${product.stockQuantity} of "${product.name}" left in stock. Please reduce the quantity in your cart.`
+                : `"${product.name}" is sold out. Please remove it from your cart.`);
+            err.isStockError = true;
+            throw err;
+        }
+    }
+};
+
+module.exports = { checkStock, reserveStock, releaseStock };

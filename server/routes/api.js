@@ -3,11 +3,12 @@ const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
-const { protect, SECRET_KEY } = require('../middleware/auth');
+const { protect, SECRET_KEY, VERIFY_OPTIONS } = require('../middleware/auth');
 const User = require('../models/User');
 const { sendOrderConfirmationEmail, sendNewOrderAdminEmail } = require('../utils/email');
-const { reserveStock, releaseStock } = require('../utils/stock');
+const { checkStock } = require('../utils/stock');
 
 // GET /api/products - Get all products
 router.get('/products', async (req, res) => {
@@ -19,20 +20,57 @@ router.get('/products', async (req, res) => {
     }
 });
 
-// POST /api/checkout
-router.post('/checkout', async (req, res) => {
-    try {
-        const { cart, customerInfo, deliveryMethod } = req.body;
+// Checkout sends emails, creates accounts and holds stock, so keep it well below the global limit
+const checkoutLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, message: 'Too many orders from this network. Please try again later or contact us on WhatsApp.' }
+});
 
-        if (!cart || cart.length === 0) {
+const CUSTOMER_FIELD_LIMITS = { name: 100, email: 254, phone: 30, address: 300, state: 50, password: 200 };
+const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+
+// Keep only known customer fields, as trimmed strings within length limits
+const cleanCustomerInfo = (info) => {
+    const cleaned = {};
+    for (const [field, maxLength] of Object.entries(CUSTOMER_FIELD_LIMITS)) {
+        const value = info?.[field];
+        if (value === undefined || value === null || value === '') continue;
+        if (typeof value !== 'string') throw new Error(`Invalid ${field}`);
+        const trimmed = field === 'password' ? value : value.trim();
+        if (trimmed.length > maxLength) throw new Error(`${field} is too long`);
+        cleaned[field] = trimmed;
+    }
+    if (cleaned.email && !EMAIL_PATTERN.test(cleaned.email)) throw new Error('Please enter a valid email address');
+    return cleaned;
+};
+
+// POST /api/checkout
+router.post('/checkout', checkoutLimiter, async (req, res) => {
+    try {
+        const { cart, deliveryMethod } = req.body;
+
+        if (!Array.isArray(cart) || cart.length === 0) {
             return res.status(400).json({ success: false, message: 'Cart is empty' });
+        }
+        if (cart.length > 50) {
+            return res.status(400).json({ success: false, message: 'Too many items in cart' });
+        }
+
+        let customerInfo;
+        try {
+            customerInfo = cleanCustomerInfo(req.body.customerInfo);
+        } catch (err) {
+            return res.status(400).json({ success: false, message: err.message });
         }
 
         let userId = null;
         if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             try {
                 const token = req.headers.authorization.split(' ')[1];
-                const decoded = jwt.verify(token, SECRET_KEY);
+                const decoded = jwt.verify(token, SECRET_KEY, VERIFY_OPTIONS);
                 userId = decoded.id;
             } catch (err) {
                 // Token invalid or expired, continue as guest
@@ -52,6 +90,14 @@ router.post('/checkout', async (req, res) => {
 
             if (!dbProduct) {
                 return res.status(404).json({ success: false, message: `Product ${item.name} not found` });
+            }
+
+            // Colour and size must be options the product actually offers
+            if (item.selectedColor && !dbProduct.colors.some(c => c.name === item.selectedColor)) {
+                return res.status(400).json({ success: false, message: `The selected colour for ${dbProduct.name} is no longer available. Please remove it from your cart and add it again.` });
+            }
+            if (item.selectedSize && !dbProduct.sizes.includes(item.selectedSize)) {
+                return res.status(400).json({ success: false, message: `The selected size for ${dbProduct.name} is no longer available. Please remove it from your cart and add it again.` });
             }
 
             const quantity = Number(item.quantity || 1);
@@ -77,9 +123,9 @@ router.post('/checkout', async (req, res) => {
             });
         }
 
-        // Take the items out of stock (fails if anything sold out meanwhile)
+        // Make sure the items are available. Stock is only taken off when an admin marks the order as paid.
         try {
-            await reserveStock(processedItems);
+            await checkStock(processedItems);
         } catch (err) {
             if (err.isStockError) {
                 return res.status(400).json({ success: false, message: err.message });
@@ -99,7 +145,6 @@ router.post('/checkout', async (req, res) => {
                 });
 
                 if (existingUser) {
-                    await releaseStock(processedItems);
                     return res.status(400).json({ success: false, message: 'Account with this email or username already exists. Please log in.' });
                 }
 
@@ -116,7 +161,6 @@ router.post('/checkout', async (req, res) => {
                 userId = savedUser._id;
             } catch (err) {
                 console.error('Auto-registration error:', err);
-                await releaseStock(processedItems);
                 return res.status(500).json({ success: false, message: 'Server error during account creation.' });
             }
         }
@@ -125,18 +169,12 @@ router.post('/checkout', async (req, res) => {
             user: userId,
             items: processedItems,
             totalAmount: calculatedTotal,
-            customerInfo: customerInfo || {},
+            customerInfo: { ...customerInfo, password: undefined },
             deliveryMethod: deliveryMethod || 'delivery',
             status: 'pending'
         });
 
-        let savedOrder;
-        try {
-            savedOrder = await newOrder.save();
-        } catch (err) {
-            await releaseStock(processedItems);
-            throw err;
-        }
+        const savedOrder = await newOrder.save();
 
         // Send Email Notifications
         try {

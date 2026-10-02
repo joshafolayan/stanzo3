@@ -48,6 +48,11 @@ const orderSchema = new mongoose.Schema({
     },
     processedBy: {
         type: String
+    },
+    // True once this order's items have been taken out of product stock (happens when marked paid)
+    stockDeducted: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

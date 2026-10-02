@@ -21,7 +21,9 @@ export const AuthProvider = ({ children }) => {
         const interceptor = axios.interceptors.response.use(
             (response) => response,
             (error) => {
-                if (error.response && error.response.status === 401) {
+                // A 401 from login/register just means wrong credentials - let the form show the error
+                const isAuthAttempt = /\/api\/auth\/(login|register)$/.test(error.config?.url || '');
+                if (error.response && error.response.status === 401 && !isAuthAttempt) {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     delete axios.defaults.headers.common['Authorization'];

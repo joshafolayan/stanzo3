@@ -11,6 +11,18 @@ const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 const SENDER_EMAIL = process.env.EMAIL_FROM || 'support@allroundstores.com';
 const sender = { email: SENDER_EMAIL, name: "Allround Stores" };
 
+// Escape customer-supplied text before putting it in email HTML, so nobody can inject links or markup
+const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const renderOrderItems = (items) => items.map(item =>
+    `<li>${item.quantity}x ${escapeHtml(item.name)}${item.selectedColor ? ` - Color: ${escapeHtml(item.selectedColor)}` : ''}${item.selectedSize ? `, Size: ${escapeHtml(item.selectedSize)}` : ''} - #${item.price.toLocaleString()}</li>`
+).join('');
+
 const sendResetEmail = async (email, resetToken, role = 'user') => {
     try {
         const resetUrl = `${process.env.CLIENT_URL || 'https://allroundstores.com'}${role === 'admin' ? '/admin' : ''}/reset-password?token=${resetToken}`;
@@ -54,7 +66,7 @@ const sendOrderConfirmationEmail = async (email, order) => {
                 <p>Your order <strong>#${order._id}</strong> has been received and is currently pending processing.</p>
                 <h3>Order Summary</h3>
                 <ul>
-                    ${order.items.map(item => `<li>${item.quantity}x ${item.name}${item.selectedColor ? ` - Color: ${item.selectedColor}` : ''}${item.selectedSize ? `, Size: ${item.selectedSize}` : ''} - #${item.price.toLocaleString()}</li>`).join('')}
+                    ${renderOrderItems(order.items)}
                 </ul>
                 <p><strong>Total Amount: #${order.totalAmount.toLocaleString()}</strong></p>
                 <p>We will notify you once your order is confirmed and shipped.</p>
@@ -85,13 +97,13 @@ const sendNewOrderAdminEmail = async (adminEmails, order) => {
                 <h2>New Order Received!</h2>
                 <p>A new order <strong>#${order._id}</strong> has been placed.</p>
                 <h3>Customer Information</h3>
-                <p>Name: ${order.customerInfo?.name || 'N/A'}</p>
-                <p>Email: ${order.customerInfo?.email || 'N/A'}</p>
-                <p>Phone: ${order.customerInfo?.phone || 'N/A'}</p>
-                <p>Delivery State: ${order.customerInfo?.state || 'N/A'}</p>
+                <p>Name: ${escapeHtml(order.customerInfo?.name || 'N/A')}</p>
+                <p>Email: ${escapeHtml(order.customerInfo?.email || 'N/A')}</p>
+                <p>Phone: ${escapeHtml(order.customerInfo?.phone || 'N/A')}</p>
+                <p>Delivery State: ${escapeHtml(order.customerInfo?.state || 'N/A')}</p>
                 <h3>Order Summary</h3>
                 <ul>
-                    ${order.items.map(item => `<li>${item.quantity}x ${item.name}${item.selectedColor ? ` - Color: ${item.selectedColor}` : ''}${item.selectedSize ? `, Size: ${item.selectedSize}` : ''} - #${item.price.toLocaleString()}</li>`).join('')}
+                    ${renderOrderItems(order.items)}
                 </ul>
                 <p><strong>Total Amount: #${order.totalAmount.toLocaleString()}</strong></p>
                 <p>Please log in to the admin panel to process this order.</p>

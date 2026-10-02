@@ -8,7 +8,10 @@ const User = require('../models/User');
 const { protect, admin } = require('../middleware/auth');
 const { uploadCloud, cloudinary } = require('../config/cloudinary');
 
-const DEFAULT_CATEGORIES = ['Bags', 'Shoes', 'Accessories', 'Clothing'];
+const STAFF_ROLES = ['admin', 'manager', 'salesrep', 'superadmin'];
+const ADMIN_ROLES = ['admin', 'superadmin']; // roles that can manage staff accounts
+
+const DEFAULT_CATEGORIES =['Bags', 'Shoes', 'Accessories', 'Clothing'];
 
 // Delete an image from Cloudinary given its URL (non-Cloudinary paths are ignored)
 const destroyCloudinaryImage = async (imgUrl) => {
@@ -162,22 +165,42 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
             return res.status(400).json({ message: 'Cannot update an already delivered order.' });
         }
 
-        // Cancelling puts the items back in stock; un-cancelling takes them out again
+        // Stock comes off once the order is paid (or moved past paid), and goes back if it returns to pending/cancelled.
+        // The stockDeducted flag is flipped atomically so two admins clicking at once can't deduct twice.
         const { reserveStock, releaseStock } = require('../utils/stock');
-        if (status === 'cancelled' && existingOrder.status !== 'cancelled') {
-            await releaseStock(existingOrder.items);
-        } else if (existingOrder.status === 'cancelled' && status !== 'cancelled') {
-            try {
-                await reserveStock(existingOrder.items);
-            } catch (err) {
-                if (err.isStockError) {
-                    return res.status(400).json({ message: `Cannot reopen this order: ${err.message.replace(/ Please.*$/, '')}` });
+        const PAID_STATUSES = ['paid', 'processing', 'shipped', 'delivered'];
+        let stockDeducted = existingOrder.stockDeducted;
+
+        if (PAID_STATUSES.includes(status) && !existingOrder.stockDeducted) {
+            const claimed = await Order.findOneAndUpdate(
+                { _id: existingOrder._id, stockDeducted: { $ne: true } },
+                { stockDeducted: true }
+            );
+            if (claimed) {
+                try {
+                    await reserveStock(existingOrder.items);
+                } catch (err) {
+                    await Order.updateOne({ _id: existingOrder._id }, { stockDeducted: false });
+                    if (err.isStockError) {
+                        return res.status(400).json({ message: `Not enough stock to mark this order as ${status}: ${err.message.replace(/ Please.*$/, '')}` });
+                    }
+                    throw err;
                 }
-                throw err;
             }
+            stockDeducted = true;
+        } else if (!PAID_STATUSES.includes(status) && existingOrder.stockDeducted) {
+            const claimed = await Order.findOneAndUpdate(
+                { _id: existingOrder._id, stockDeducted: true },
+                { stockDeducted: false }
+            );
+            if (claimed) {
+                await releaseStock(existingOrder.items);
+            }
+            stockDeducted = false;
         }
 
         existingOrder.status = status;
+        existingOrder.stockDeducted = stockDeducted;
         existingOrder.processedBy = req.user.username;
         const updatedOrder = await existingOrder.save();
 
@@ -333,14 +356,31 @@ router.post('/users', protect, admin, async (req, res) => {
 // DELETE /api/admin/users/:id - Delete User
 router.delete('/users/:id', protect, admin, async (req, res) => {
     try {
-        const { id } = req.params;
-
-        const count = await User.countDocuments();
-        if (count <= 1) {
-            return res.status(400).json({ message: 'Cannot delete the last admin user' });
+        // Only admin and superadmin can remove staff (same rule as creating them)
+        if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+            return res.status(403).json({ message: 'Only an admin can delete users' });
         }
 
-        await User.findByIdAndDelete(id);
+        const target = await User.findById(req.params.id);
+        if (!target || !STAFF_ROLES.includes(target.role)) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (String(target._id) === String(req.user.id)) {
+            return res.status(400).json({ message: 'You cannot delete your own account' });
+        }
+        if (target.role === 'superadmin' && req.user.role !== 'superadmin') {
+            return res.status(403).json({ message: 'Only a superadmin can delete a superadmin' });
+        }
+
+        // Never remove the last account that can manage users
+        if (ADMIN_ROLES.includes(target.role)) {
+            const adminCount = await User.countDocuments({ role: { $in: ADMIN_ROLES } });
+            if (adminCount <= 1) {
+                return res.status(400).json({ message: 'Cannot delete the last admin user' });
+            }
+        }
+
+        await target.deleteOne();
         res.json({ message: 'User removed' });
     } catch (error) {
         res.status(500).json({ message: 'Server error deleting user' });
