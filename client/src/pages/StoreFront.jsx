@@ -6,16 +6,19 @@ import Hero from '../components/Hero';
 import ProductGrid from '../components/ProductGrid';
 import ProductRow from '../components/ProductRow';
 import CategoryTiles from '../components/CategoryTiles';
+import PromoTiles from '../components/PromoTiles';
 import TrustStrip from '../components/TrustStrip';
 import Footer from '../components/Footer';
 import WhatsAppButton from '../components/WhatsAppButton';
 import { isSoldOut } from '../utils/stock';
+import { hasWholesale } from '../utils/price';
 
 const ROW_SIZE = 12;
 
 const FILTERS = {
     deals: { title: 'Deals', subtitle: 'Discounted while stock lasts' },
     new: { title: 'New Arrivals', subtitle: 'The latest additions to the store' },
+    wholesale: { title: 'Wholesale', subtitle: 'Lower prices when you buy in bulk' },
 };
 
 const isDeal = (product) => product.discountPercentage > 0;
@@ -84,6 +87,7 @@ const StoreFront = () => {
     if (category) filteredProducts = filteredProducts.filter(product => product.category?.toLowerCase() === category.toLowerCase());
     if (filter === 'deals') filteredProducts = filteredProducts.filter(isDeal);
     if (filter === 'new') filteredProducts = [...filteredProducts].sort(newestFirst);
+    if (filter === 'wholesale') filteredProducts = filteredProducts.filter(hasWholesale);
 
     // Homepage rows only show what can be bought right now
     const inStock = products.filter(product => !isSoldOut(product));
@@ -106,6 +110,14 @@ const StoreFront = () => {
                 {isHome && (
                     <>
                         <Hero banners={banners} featured={deals.length > 0 ? deals : newArrivals} hasDeals={deals.length > 0} />
+                        {/* Wait for products: adding a tile in front later makes scroll-snap push the row sideways */}
+                        {!loading && (
+                            <PromoTiles
+                                maxDiscount={Math.max(0, ...inStock.map(product => product.discountPercentage || 0))}
+                                hasWholesale={inStock.some(hasWholesale)}
+                                productCount={products.length}
+                            />
+                        )}
                         <ProductRow title={FILTERS.deals.title} subtitle={FILTERS.deals.subtitle} seeAllTo="/shop?filter=deals" products={deals} />
                         <CategoryTiles categories={categories} />
                         <ProductRow title="Top Sellers" subtitle="Customer favourites" products={bestSellers} />

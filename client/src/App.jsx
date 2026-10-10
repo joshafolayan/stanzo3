@@ -24,6 +24,7 @@ import UserDashboard from './pages/UserDashboard';
 import Wishlist from './pages/Wishlist';
 import AdminOrders from './pages/admin/AdminOrders';
 import CartModal from './components/CartModal';
+import MobileBottomNav from './components/MobileBottomNav';
 import PaymentModal from './components/PaymentModal';
 
 function App() {
@@ -63,6 +64,7 @@ function App() {
               <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
               <Route path="/admin/reset-password" element={<AdminResetPassword />} />
             </Routes>
+            <MobileBottomNav />
             <CartModal onCheckout={() => setIsPaymentOpen(true)} />
             <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} />
           </ErrorBoundary>

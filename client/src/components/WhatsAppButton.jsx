@@ -11,7 +11,7 @@ const WhatsAppButton = () => {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Chat with us on WhatsApp"
-            className="fixed bottom-5 right-5 z-40 flex items-center gap-2 bg-[#25D366] text-white rounded-full shadow-lg p-3.5 md:px-5 hover:scale-105 transition-transform"
+            className="fixed bottom-20 md:bottom-5 right-4 md:right-5 z-40 flex items-center gap-2 bg-[#25D366] text-white rounded-full shadow-lg p-3.5 md:px-5 hover:scale-105 transition-transform"
         >
             <MessageCircle className="w-6 h-6" />
             <span className="hidden md:inline text-sm font-semibold">Chat with us</span>

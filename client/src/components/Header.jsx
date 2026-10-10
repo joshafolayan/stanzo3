@@ -115,7 +115,7 @@ const Header = () => {
                                     </button>
                                 </form>
                             ) : (
-                                <button onClick={() => setIsSearchOpen(true)} className="hover:text-brand-gray transition-colors">
+                                <button onClick={() => setIsSearchOpen(true)} aria-label="Search" className="hidden md:block hover:text-brand-gray transition-colors">
                                     <Search className="w-5 h-5" strokeWidth={1.5} />
                                 </button>
                             )}
@@ -132,7 +132,8 @@ const Header = () => {
                                 </div>
                             )}
 
-                            <Link to="/wishlist" aria-label="Wishlist" className="relative text-brand-black hover:text-brand-gray transition-colors flex items-center">
+                            {/* On phones, search and wishlist are in the bottom bar instead */}
+                            <Link to="/wishlist" aria-label="Wishlist" className="relative text-brand-black hover:text-brand-gray transition-colors hidden md:flex items-center">
                                 <Heart className="w-5 h-5" strokeWidth={1.5} />
                                 {wishlistIds.length > 0 && (
                                     <span className="absolute -top-1.5 -right-2 bg-pink-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
