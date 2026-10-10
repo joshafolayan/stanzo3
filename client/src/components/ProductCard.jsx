@@ -4,6 +4,7 @@ import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { getImageUrl } from '../utils/image';
+import { formatNaira, getSalePrice } from '../utils/price';
 import { stockMode, getStock, getTotalStock, isSoldOut as productSoldOut, isSizeAvailable } from '../utils/stock';
 
 const ProductCard = ({ product }) => {
@@ -106,12 +107,17 @@ const ProductCard = ({ product }) => {
         <div className={clsx("group flex flex-col relative w-full cursor-pointer z-0 hover:z-20", isSoldOut && "opacity-60 grayscale")}>
             <Link to={`/product/${product.id}`} className="block">
                 <div className="w-full aspect-[4/5] relative overflow-hidden bg-gray-50 mb-4 group/slider product-pop-frame">
-                    {/* Sale Badge overlay — lives inside the frame so it pops with it */}
-                    <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
-                        <span className="bg-brand-black text-brand-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full tracking-wider uppercase">
-                            {isSoldOut ? 'Sold Out' : 'Sale'}
-                        </span>
-                    </div>
+                    {/* Badge overlay — lives inside the frame so it pops with it */}
+                    {(isSoldOut || product.discountPercentage > 0) && (
+                        <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
+                            <span className={clsx(
+                                "text-brand-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full tracking-wider uppercase",
+                                isSoldOut ? "bg-brand-black" : "bg-red-600"
+                            )}>
+                                {isSoldOut ? 'Sold Out' : `-${product.discountPercentage}%`}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Image — cropped fill at rest, cross-fades to the full
                         uncropped shot while the frame pops out on hover */}
@@ -161,10 +167,10 @@ const ProductCard = ({ product }) => {
                     <h3 className="text-sm md:text-lg font-serif text-brand-black mb-0.5 md:mb-1 leading-tight line-clamp-2 md:line-clamp-1">{product.name}</h3>
                     <p className="text-xs md:text-sm font-semibold text-brand-gray mb-2 md:mb-4 flex flex-wrap gap-x-1 md:gap-x-2 items-center">
                         {product.discountPercentage > 0 && (
-                            <span className="line-through text-gray-400 font-normal text-[10px] md:text-sm">#{product.price.toLocaleString()}</span>
+                            <span className="line-through text-gray-400 font-normal text-[10px] md:text-sm">{formatNaira(product.price)}</span>
                         )}
-                        <span className="text-brand-black">
-                            #{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()}
+                        <span className={product.discountPercentage > 0 ? "text-red-600" : "text-brand-black"}>
+                            {formatNaira(getSalePrice(product))}
                         </span>
                     </p>
                     {isLowStock && (

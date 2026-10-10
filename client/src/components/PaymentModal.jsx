@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { whatsappLink } from '../config/store';
 import { X, CheckCircle, MessageCircle, Loader2, Store, Truck, LogIn } from 'lucide-react';
 
 const PaymentModal = ({ isOpen, onClose }) => {
@@ -118,16 +119,14 @@ const PaymentModal = ({ isOpen, onClose }) => {
                 message += `${index + 1}. ${qty > 1 ? `${qty}x ` : ''}${item.name}`;
                 if (item.selectedColor) message += ` - Color: ${item.selectedColor}`;
                 if (item.selectedSize) message += `, Size: ${item.selectedSize}`;
-                message += ` - #${item.price.toLocaleString()}${qty > 1 ? ' each' : ''}\n`;
+                message += ` - ₦${item.price.toLocaleString()}${qty > 1 ? ' each' : ''}\n`;
             });
             // Use the server's total so the message always matches the recorded order
             const totalAmount = response.data.totalAmount ?? cartTotal;
-            message += `\n*Total Amount:* #${totalAmount.toLocaleString()}\n\n`;
+            message += `\n*Total Amount:* ₦${totalAmount.toLocaleString()}\n\n`;
             message += `I've transferred the amount to your account. Please confirm receipt. Thank you!`;
 
-            const encodedMessage = encodeURIComponent(message);
-            const phoneNumber = '2347061663031';
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+            const whatsappUrl = whatsappLink(message);
 
             const newWindow = window.open(whatsappUrl, '_blank');
             if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
@@ -316,7 +315,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                     </div>
                                     <div className="flex justify-between pt-2">
                                         <span className="text-gray-500">Amount</span>
-                                        <span className="font-bold text-red-500 text-lg">#{cartTotal.toLocaleString()}</span>
+                                        <span className="font-bold text-red-500 text-lg">₦{cartTotal.toLocaleString()}</span>
                                     </div>
                                 </div>
                                 <p className="text-sm text-gray-500 italic mt-4 text-center">

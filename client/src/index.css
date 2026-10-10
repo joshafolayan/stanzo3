@@ -14,6 +14,36 @@
 }
 
 @layer components {
+  /* Announcement bar: the track holds two copies of the list, so sliding it
+     by half its width lands exactly where it started. */
+  .marquee-track {
+    animation: marquee 40s linear infinite;
+  }
+
+  .marquee-track:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* Horizontal product rows: scroll without showing a scrollbar */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+      animation: none;
+    }
+  }
+
   /* Product image hover: the tile pops out of the grid while the cropped
      (object-cover) shot cross-fades into the full, uncropped (object-contain)
      one — then settles back on mouse-out. */

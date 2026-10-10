@@ -1,38 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Search, User, X, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { ShoppingCart, Search, User, X, Menu } from 'lucide-react';
+import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom';
+import clsx from 'clsx';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
+import { STORE } from '../config/store';
+
+const NAV_LINKS = [
+    { to: '/', label: 'Home' },
+    { to: '/shop', label: 'Shop All' },
+    { to: '/shop?filter=deals', label: 'Deals' },
+    { to: '/shop?filter=new', label: 'New Arrivals' },
+];
 
 const Header = () => {
     const { cart, setIsCartOpen } = useCart();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const location = useLocation();
+    const isActive = (to) => to === location.pathname + location.search;
 
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [currentAnnouncement, setCurrentAnnouncement] = useState(0);
 
     const userLink = user ? (user.role === 'admin' || user.role === 'superadmin' ? '/admin' : '/dashboard') : '/login';
     const userLabel = user ? (user.role === 'admin' || user.role === 'superadmin' ? 'Admin Portal' : 'My Dashboard') : 'Sign In';
-
-    const announcements = [
-        "Welcome to our store",
-        "Important Delivery Notice: Lagos: 1-5 working days, Outside Lagos: 2-7 working days (from dispatch)"
-    ];
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentAnnouncement((prev) => (prev + 1) % announcements.length);
-        }, 5000); // Slide every 5 seconds
-        return () => clearInterval(timer);
-    }, [announcements.length]);
-
-    const nextAnnouncement = () => setCurrentAnnouncement((prev) => (prev + 1) % announcements.length);
-    const prevAnnouncement = () => setCurrentAnnouncement((prev) => (prev - 1 + announcements.length) % announcements.length);
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
@@ -48,17 +43,20 @@ const Header = () => {
     return (
         <>
             <header className="fixed top-0 left-0 right-0 z-50 bg-brand-white border-b border-gray-100">
-                {/* Announcement Bar Slider */}
-                <div className="bg-brand-black text-brand-white text-[10px] md:text-xs py-2 text-center tracking-wide font-light relative h-8 md:h-9 flex items-center justify-center z-50">
-                    <button onClick={prevAnnouncement} className="absolute left-2 md:left-4 p-1 hover:text-gray-300 z-10">
-                        <ChevronLeft className="w-3 h-3 md:w-4 md:h-4" />
-                    </button>
-                    <div className="overflow-hidden w-[80%] max-w-2xl px-2">
-                        <p className="animate-fade-in truncate">{announcements[currentAnnouncement]}</p>
+                {/* Announcement Bar — the list is rendered twice so the scroll loops seamlessly */}
+                <div className="bg-brand-black text-brand-white text-[10px] md:text-xs tracking-wide font-light h-8 md:h-9 flex items-center overflow-hidden z-50">
+                    <div className="marquee-track flex shrink-0 whitespace-nowrap">
+                        {[0, 1].map(copy => (
+                            <div key={copy} className="flex shrink-0" aria-hidden={copy === 1}>
+                                {STORE.announcements.map(text => (
+                                    <span key={text} className="flex items-center px-6 md:px-10">
+                                        <span className="w-1 h-1 rounded-full bg-pink-600 mr-6 md:mr-10" />
+                                        {text}
+                                    </span>
+                                ))}
+                            </div>
+                        ))}
                     </div>
-                    <button onClick={nextAnnouncement} className="absolute right-2 md:right-4 p-1 hover:text-gray-300 z-10">
-                        <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
-                    </button>
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -71,10 +69,12 @@ const Header = () => {
                             >
                                 <Menu className="w-6 h-6" strokeWidth={1.5} />
                             </button>
-                            <div className="hidden md:flex space-x-8 text-sm font-medium tracking-wide">
-                                <a href="/" className="hover:text-brand-gray transition-colors">Home</a>
-                                <a href="/shop" className="underline underline-offset-4 decoration-2">Shop All</a>
-                                {/* More links would go here */}
+                            <div className="hidden md:flex space-x-5 lg:space-x-8 text-sm font-medium tracking-wide whitespace-nowrap">
+                                {NAV_LINKS.map(link => (
+                                    <Link key={link.to} to={link.to} className={clsx("hover:text-brand-gray transition-colors", isActive(link.to) && "underline underline-offset-4 decoration-2")}>
+                                        {link.label}
+                                    </Link>
+                                ))}
                             </div>
                         </div>
 
@@ -158,8 +158,11 @@ const Header = () => {
                             </div>
 
                             <div className="flex-1 px-4 flex flex-col space-y-6">
-                                <a href="/" className="block text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors">Home</a>
-                                <a href="/shop" className="block text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors">Shop All</a>
+                                {NAV_LINKS.map(link => (
+                                    <Link key={link.to} to={link.to} onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors">
+                                        {link.label}
+                                    </Link>
+                                ))}
 
                                 {/* Categories */}
                                 <div className="pt-2 pb-2 pl-4 border-l-2 border-brand-black space-y-4">

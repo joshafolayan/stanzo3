@@ -270,7 +270,7 @@ const AdminProducts = () => {
                                     {product.name}
                                     <div className="text-xs text-gray-500 font-normal mt-1">{product.category || 'Uncategorized'}</div>
                                 </td>
-                                <td className="p-4 text-gray-600">#{product.price.toLocaleString()}</td>
+                                <td className="p-4 text-gray-600">₦{product.price.toLocaleString()}</td>
                                 <td className="p-4 text-sm">
                                     {(() => {
                                         const total = getTotalStock(product);

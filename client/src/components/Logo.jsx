@@ -24,7 +24,7 @@ const Logo = ({ className = '', dark = false }) => {
 
             <div className="flex flex-col items-start justify-center">
                 <span className={`
-                    text-xl md:text-2xl font-serif font-bold tracking-wide leading-none
+                    text-xl md:text-2xl font-serif font-bold tracking-wide leading-none whitespace-nowrap
                     ${dark ? 'text-white' : 'text-brand-black'}
                 `}>
                     All Round

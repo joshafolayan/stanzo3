@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import ProductGrid from '../components/ProductGrid';
-import Logo from '../components/Logo';
+import ProductRow from '../components/ProductRow';
+import TrustStrip from '../components/TrustStrip';
+import Footer from '../components/Footer';
+import WhatsAppButton from '../components/WhatsAppButton';
+import { isSoldOut } from '../utils/stock';
+
+const ROW_SIZE = 12;
+
+const FILTERS = {
+    deals: { title: 'Deals', subtitle: 'Discounted while stock lasts' },
+    new: { title: 'New Arrivals', subtitle: 'The latest additions to the store' },
+};
+
+const isDeal = (product) => product.discountPercentage > 0;
+const newestFirst = (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
 
 const StoreFront = () => {
     const [products, setProducts] = useState([]);
@@ -12,7 +26,10 @@ const StoreFront = () => {
     const [error, setError] = useState(null);
 
     const [searchParams] = useSearchParams();
+    const location = useLocation();
     const searchQuery = searchParams.get('q') || '';
+    const filter = FILTERS[searchParams.get('filter')] ? searchParams.get('filter') : null;
+    const isHome = location.pathname === '/' && !searchQuery && !filter;
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -30,7 +47,7 @@ const StoreFront = () => {
         fetchProducts();
     }, []);
 
-    const filteredProducts = products.filter(product => {
+    const searchedProducts = products.filter(product => {
         if (!searchQuery) return true;
         const lowerQuery = searchQuery.toLowerCase();
 
@@ -47,80 +64,51 @@ const StoreFront = () => {
         );
     });
 
+    let filteredProducts = searchedProducts;
+    if (filter === 'deals') filteredProducts = searchedProducts.filter(isDeal);
+    if (filter === 'new') filteredProducts = [...searchedProducts].sort(newestFirst);
+
+    // Homepage rows only show what can be bought right now
+    const inStock = products.filter(product => !isSoldOut(product));
+    const deals = inStock.filter(isDeal).slice(0, ROW_SIZE);
+    const newArrivals = [...inStock].sort(newestFirst).slice(0, ROW_SIZE);
+
+    let heading = { title: 'All products', subtitle: null };
+    if (filter) heading = FILTERS[filter];
+    if (searchQuery) heading = { title: `Search results for: "${searchQuery}"`, subtitle: null };
+
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans">
             <Header />
 
             <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20 w-full">
-                {!searchQuery && <Hero />}
-
-                {searchQuery && (
-                    <div className="mb-8 pt-8 border-b pb-4">
-                        <h2 className="text-2xl font-serif text-brand-black">
-                            Search results for: "{searchQuery}"
-                        </h2>
-                        <p className="text-brand-gray mt-2">{filteredProducts.length} results found</p>
-                    </div>
+                {isHome && (
+                    <>
+                        <Hero featured={deals.length > 0 ? deals : newArrivals} hasDeals={deals.length > 0} />
+                        <ProductRow title={FILTERS.deals.title} subtitle={FILTERS.deals.subtitle} seeAllTo="/shop?filter=deals" products={deals} />
+                        <ProductRow title={FILTERS.new.title} subtitle={FILTERS.new.subtitle} seeAllTo="/shop?filter=new" products={newArrivals} />
+                        <TrustStrip />
+                    </>
                 )}
 
+                <div className={isHome ? 'mt-12 md:mt-16 mb-6' : 'mb-8 pt-8 border-b pb-4'}>
+                    <h2 className="text-2xl md:text-3xl font-serif text-brand-black">{heading.title}</h2>
+                    {!isHome && !loading && !error && (
+                        <p className="text-brand-gray mt-2">
+                            {heading.subtitle ? `${heading.subtitle} · ` : ''}{filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+                        </p>
+                    )}
+                </div>
+
                 <ProductGrid products={filteredProducts} loading={loading} error={error} />
+
+                {!isHome && !loading && !error && filteredProducts.length === 0 && (
+                    <p className="text-center text-brand-gray py-12">Nothing here right now. Check back soon.</p>
+                )}
             </main>
 
-            <footer className="bg-brand-charcoal text-white mt-16 pt-16 pb-8 border-t border-brand-charcoal">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-                        <div className="lg:col-span-2 flex flex-col items-start pr-8">
-                            <div className="mb-6">
-                                <Logo dark={true} />
-                            </div>
-                            <p className="text-sm font-light text-gray-400 leading-relaxed max-w-sm">
-                                Your one-stop destination for everything you need. Quality products and exceptional service, all around.
-                            </p>
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-serif mb-6 tracking-wide">Quick links</h4>
-                            <ul className="space-y-4 text-sm font-light text-gray-300">
-                                <li><a href="#" className="hover:text-white transition-colors">Search</a></li>
-                                <li><a href="#" className="hover:text-white transition-colors underline underline-offset-4 decoration-1 font-normal text-white">All products</a></li>
-                                <li><a href="#" className="hover:text-white transition-colors">All collections</a></li>
-                                <li><a href="#" className="hover:text-white transition-colors">Contact Information</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-serif mb-6 tracking-wide">Legal</h4>
-                            <ul className="space-y-4 text-sm font-light text-gray-300">
-                                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                                <li><a href="#" className="hover:text-white transition-colors">Refund Policy</a></li>
-                                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center mb-16 border-t border-gray-700 pt-16 mt-8">
-                        <h4 className="text-lg font-serif mb-6 tracking-wide text-center">Subscribe to our emails</h4>
-                        <div className="w-full max-w-md relative">
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                className="w-full bg-transparent border border-gray-600 rounded-sm py-3 px-4 text-white placeholder-gray-400 focus:outline-none focus:border-white transition-colors"
-                            />
-                            <button className="absolute right-0 top-0 bottom-0 px-4 text-gray-400 hover:text-white transition-colors">
-                                ➔
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="text-center text-xs font-light text-gray-400 border-t border-gray-800 pt-8 flex flex-wrap justify-center gap-2">
-                        <span>© {new Date().getFullYear()}, All Round Stores</span>
-                        <span>·</span>
-                        <a href="#" className="hover:text-white transition-colors">Privacy policy</a>
-                        <span>·</span>
-                        <a href="#" className="hover:text-white transition-colors">Refund policy</a>
-                        <span>·</span>
-                        <a href="#" className="hover:text-white transition-colors">Terms of service</a>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
+            <WhatsAppButton />
         </div>
     );
 };

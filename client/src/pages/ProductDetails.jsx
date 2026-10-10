@@ -157,10 +157,10 @@ const ProductDetails = () => {
 
                         <div className={clsx("text-xl", isLowStock || isSoldOut ? "mb-2" : "mb-8")}>
                             {product.discountPercentage > 0 && (
-                                <span className="line-through text-gray-400 mr-3">#{product.price.toLocaleString()}</span>
+                                <span className="line-through text-gray-400 mr-3">₦{product.price.toLocaleString()}</span>
                             )}
                             <span className="font-medium text-brand-black">
-                                #{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()}
+                                ₦{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()}
                             </span>
                         </div>
 

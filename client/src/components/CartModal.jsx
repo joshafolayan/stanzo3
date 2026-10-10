@@ -122,11 +122,11 @@ const CartModal = ({ onCheckout }) => {
                                         <div className="flex items-center gap-2">
                                             <div className="text-right">
                                                 <span className="font-bold text-red-500 text-sm">
-                                                    #{(item.price * (item.quantity || 1)).toLocaleString()}
+                                                    ₦{(item.price * (item.quantity || 1)).toLocaleString()}
                                                 </span>
                                                 {(item.quantity || 1) > 1 && (
                                                     <p className="text-xs text-gray-400">
-                                                        #{item.price.toLocaleString()} each
+                                                        ₦{item.price.toLocaleString()} each
                                                     </p>
                                                 )}
                                             </div>
@@ -151,7 +151,7 @@ const CartModal = ({ onCheckout }) => {
                     <div className="p-4 border-t bg-gray-50">
                         <div className="flex justify-between items-center mb-4 text-lg font-bold">
                             <span>Total:</span>
-                            <span>#{cartTotal.toLocaleString()}</span>
+                            <span>₦{cartTotal.toLocaleString()}</span>
                         </div>
                         <button
                             onClick={() => {
