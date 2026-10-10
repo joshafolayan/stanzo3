@@ -7,7 +7,7 @@ export const STORE = {
     tagline: 'Your one-stop destination for everything you need. Quality products and exceptional service, all around.',
 
     // International format, digits only (used for wa.me links)
-    whatsapp: '2347061663031',
+    // whatsapp: '2347061663031',
     phone: '2347061663031',
     email: 'support@allroundstores.com',
     address: '',

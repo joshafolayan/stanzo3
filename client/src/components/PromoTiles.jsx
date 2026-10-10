@@ -1,38 +1,40 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Flame, Boxes, Sparkles, LayoutGrid, MessageCircle } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { STORE, whatsappLink } from '../config/store';
 
-// Colourful shortcut tiles under the hero. Tiles for sections that are empty right now are left out.
+// Shortcut links under the hero, in the same panel style as the TrustStrip.
+// Tiles for sections that are empty right now are left out.
 const PromoTiles = ({ maxDiscount = 0, hasWholesale = false, productCount = 0 }) => {
     const tiles = [
-        maxDiscount > 0 && { title: 'Deals', text: `Up to ${maxDiscount}% off`, icon: Flame, to: '/shop?filter=deals', tone: 'bg-red-50 text-red-600' },
-        hasWholesale && { title: 'Wholesale', text: 'Lower prices in bulk', icon: Boxes, to: '/shop?filter=wholesale', tone: 'bg-green-50 text-green-700' },
-        { title: 'New arrivals', text: 'Fresh in store', icon: Sparkles, to: '/shop?filter=new', tone: 'bg-amber-50 text-amber-600' },
-        { title: 'Shop all', text: productCount > 0 ? `${productCount} products` : 'Browse everything', icon: LayoutGrid, to: '/shop', tone: 'bg-blue-50 text-blue-600' },
-        STORE.whatsapp && { title: 'Order on WhatsApp', text: 'Chat to buy', icon: MessageCircle, href: whatsappLink('Hello! I would like to place an order.'), tone: 'bg-emerald-50 text-emerald-600' },
+        maxDiscount > 0 && { label: 'Deals', line: `Up to ${maxDiscount}% off`, to: '/shop?filter=deals' },
+        hasWholesale && { label: 'Wholesale', line: 'Save when you buy in bulk', to: '/shop?filter=wholesale' },
+        { label: 'New arrivals', line: 'Just in', to: '/shop?filter=new' },
+        { label: 'Shop all', line: productCount > 0 ? `${productCount} products` : 'Browse everything', to: '/shop' },
+        STORE.whatsapp && { label: 'WhatsApp', line: 'Order by chat', href: whatsappLink('Hello! I would like to place an order.') },
     ].filter(Boolean);
 
-    const tileClass = "group shrink-0 w-[42%] sm:w-[30%] md:w-auto md:flex-1 snap-start flex flex-col md:flex-row items-start md:items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 hover:border-brand-black hover:shadow-md transition-all";
+    // On phones the tiles sit two to a row; an odd one out takes the full width
+    const tileClass = "group bg-white flex flex-col justify-between gap-5 p-5 md:p-6 md:flex-1 [&:last-child:nth-child(odd)]:col-span-2 hover:bg-brand-black transition-colors duration-300";
 
     const content = (tile) => (
         <>
-            <span className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${tile.tone}`}>
-                <tile.icon className="w-5 h-5" strokeWidth={1.75} />
+            <span className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] font-medium text-brand-gray group-hover:text-gray-400 transition-colors">
+                {tile.label}
             </span>
-            <span className="min-w-0">
-                <span className="block text-sm font-semibold text-brand-black truncate">{tile.title}</span>
-                <span className="block text-xs text-brand-gray font-light truncate">{tile.text}</span>
+            <span className="flex items-end justify-between gap-3">
+                <span className="font-serif text-lg md:text-xl leading-snug text-brand-black group-hover:text-white transition-colors">{tile.line}</span>
+                <ArrowRight className="w-4 h-4 shrink-0 mb-1 text-brand-black group-hover:text-white group-hover:translate-x-1 transition-all" strokeWidth={1.5} />
             </span>
         </>
     );
 
     return (
-        <nav aria-label="Shop shortcuts" className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-px-4 no-scrollbar -mx-4 px-4 py-2 mt-6 md:mt-8">
+        <nav aria-label="Shop shortcuts" className="mt-6 md:mt-8 grid grid-cols-2 md:flex gap-px bg-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
             {tiles.map(tile => tile.href ? (
-                <a key={tile.title} href={tile.href} target="_blank" rel="noopener noreferrer" className={tileClass}>{content(tile)}</a>
+                <a key={tile.label} href={tile.href} target="_blank" rel="noopener noreferrer" className={tileClass}>{content(tile)}</a>
             ) : (
-                <Link key={tile.title} to={tile.to} className={tileClass}>{content(tile)}</Link>
+                <Link key={tile.label} to={tile.to} className={tileClass}>{content(tile)}</Link>
             ))}
         </nav>
     );

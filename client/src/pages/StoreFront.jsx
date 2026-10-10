@@ -94,6 +94,8 @@ const StoreFront = () => {
     const deals = inStock.filter(isDeal).slice(0, ROW_SIZE);
     const newArrivals = [...inStock].sort(newestFirst).slice(0, ROW_SIZE);
     const bestSellers = topSellers.filter(product => !isSoldOut(product)).slice(0, ROW_SIZE);
+    // Hero photos: deals first, topped up with the newest products
+    const heroProducts = [...deals, ...newArrivals.filter(product => !isDeal(product))];
 
     let heading = { title: 'All products', subtitle: null };
     if (filter) heading = FILTERS[filter];
@@ -109,7 +111,7 @@ const StoreFront = () => {
             <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20 w-full">
                 {isHome && (
                     <>
-                        <Hero banners={banners} featured={deals.length > 0 ? deals : newArrivals} hasDeals={deals.length > 0} />
+                        <Hero banners={banners} featured={heroProducts} hasDeals={deals.length > 0} />
                         {/* Wait for products: adding a tile in front later makes scroll-snap push the row sideways */}
                         {!loading && (
                             <PromoTiles
