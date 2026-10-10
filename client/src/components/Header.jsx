@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, Search, User, X, Menu } from 'lucide-react';
 import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
+import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
@@ -25,9 +26,19 @@ const Header = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [categories, setCategories] = useState([]);
 
     const userLink = user ? (user.role === 'admin' || user.role === 'superadmin' ? '/admin' : '/dashboard') : '/login';
     const userLabel = user ? (user.role === 'admin' || user.role === 'superadmin' ? 'Admin Portal' : 'My Dashboard') : 'Sign In';
+
+    const openMobileMenu = () => {
+        setIsMobileMenuOpen(true);
+        if (categories.length === 0) {
+            axios.get('/api/categories')
+                .then(({ data }) => setCategories(data))
+                .catch(err => console.error('Failed to fetch categories:', err));
+        }
+    };
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
@@ -65,7 +76,7 @@ const Header = () => {
                         <div className="flex-1 flex items-center">
                             <button
                                 className="md:hidden text-brand-black hover:text-brand-gray"
-                                onClick={() => setIsMobileMenuOpen(true)}
+                                onClick={openMobileMenu}
                             >
                                 <Menu className="w-6 h-6" strokeWidth={1.5} />
                             </button>
@@ -165,10 +176,15 @@ const Header = () => {
                                 ))}
 
                                 {/* Categories */}
-                                <div className="pt-2 pb-2 pl-4 border-l-2 border-brand-black space-y-4">
-                                    <a href="/?q=Bags" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-gray-700 hover:text-brand-black transition-colors">Bags</a>
-                                    <a href="/?q=Shoes" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-gray-700 hover:text-brand-black transition-colors">Shoes</a>
-                                </div>
+                                {categories.length > 0 && (
+                                    <div className="pt-2 pb-2 pl-4 border-l-2 border-brand-black space-y-4">
+                                        {categories.map(category => (
+                                            <Link key={category.name} to={`/shop?category=${encodeURIComponent(category.name)}`} onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-gray-700 hover:text-brand-black transition-colors">
+                                                {category.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
 
                                 <Link to={userLink} onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 pt-4 border-t border-gray-100">
                                     <User className="w-5 h-5" /> {userLabel}

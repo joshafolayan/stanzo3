@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X, ImagePlus, Loader2 } from 'lucide-react';
 
 const AdminCategories = () => {
     const [categories, setCategories] = useState([]);
@@ -8,6 +8,7 @@ const AdminCategories = () => {
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [uploadingId, setUploadingId] = useState(null);
 
     const fetchCategories = async () => {
         try {
@@ -74,6 +75,31 @@ const AdminCategories = () => {
         }
     };
 
+    const uploadImage = async (category, file) => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('image', file);
+        setUploadingId(category._id);
+        try {
+            await axios.put(`/api/admin/categories/${category._id}/image`, formData);
+            fetchCategories();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to upload image');
+        } finally {
+            setUploadingId(null);
+        }
+    };
+
+    const removeImage = async (category) => {
+        if (!window.confirm(`Remove the image for "${category.name}"? The shop will use one of its product photos instead.`)) return;
+        try {
+            await axios.delete(`/api/admin/categories/${category._id}/image`);
+            fetchCategories();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to remove image');
+        }
+    };
+
     return (
         <div className="p-4 md:p-8">
             <h1 className="text-xl md:text-2xl font-bold text-slate-800 mb-6 md:mb-8">Category Management</h1>
@@ -95,10 +121,13 @@ const AdminCategories = () => {
                 </button>
             </form>
 
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <p className="text-sm text-gray-500 mb-3">Category images appear in the "Shop by category" row on the homepage. Without one, the newest product's photo is used.</p>
+
+            <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 border-b">
                         <tr>
+                            <th className="p-4 font-semibold text-gray-600">Image</th>
                             <th className="p-4 font-semibold text-gray-600">Name</th>
                             <th className="p-4 font-semibold text-gray-600">Products</th>
                             <th className="p-4 font-semibold text-gray-600 text-right">Actions</th>
@@ -107,6 +136,35 @@ const AdminCategories = () => {
                     <tbody className="divide-y">
                         {categories.map(category => (
                             <tr key={category._id} className="hover:bg-gray-50">
+                                <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                        <label
+                                            title={category.image ? 'Replace image' : 'Upload image (shown on the shop homepage)'}
+                                            className="relative w-14 h-14 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-blue-500 shrink-0"
+                                        >
+                                            {uploadingId === category._id ? (
+                                                <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                                            ) : category.image ? (
+                                                <img src={category.image} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <ImagePlus className="w-5 h-5 text-gray-400" />
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                disabled={uploadingId !== null}
+                                                onChange={(e) => {
+                                                    uploadImage(category, e.target.files[0]);
+                                                    e.target.value = '';
+                                                }}
+                                            />
+                                        </label>
+                                        {category.image && (
+                                            <button onClick={() => removeImage(category)} title="Remove image" className="text-gray-400 hover:text-red-600 p-1 rounded"><X className="w-4 h-4" /></button>
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="p-4 font-medium">
                                     {editingId === category._id ? (
                                         <input
@@ -146,7 +204,7 @@ const AdminCategories = () => {
                         ))}
                         {categories.length === 0 && (
                             <tr>
-                                <td colSpan={3} className="p-8 text-center text-gray-500">No categories yet.</td>
+                                <td colSpan={4} className="p-8 text-center text-gray-500">No categories yet.</td>
                             </tr>
                         )}
                     </tbody>

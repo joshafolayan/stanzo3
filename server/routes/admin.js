@@ -175,11 +175,50 @@ router.delete('/categories/:id', protect, admin, async (req, res) => {
         if (inUse > 0) {
             return res.status(400).json({ message: `Cannot delete: ${inUse} product(s) still use this category` });
         }
+        if (category.image) await destroyCloudinaryImage(category.image);
         await category.deleteOne();
         res.json({ message: 'Category removed' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error deleting category' });
+    }
+});
+
+// PUT /api/admin/categories/:id/image - Upload or replace the category's storefront tile image
+router.put('/categories/:id/image', protect, admin, uploadCloud.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Choose an image to upload' });
+        }
+        const category = await Category.findById(req.params.id);
+        if (!category) {
+            await destroyCloudinaryImage(req.file.path);
+            return res.status(404).json({ message: 'Category not found' });
+        }
+        if (category.image) await destroyCloudinaryImage(category.image);
+        category.image = req.file.path; // Cloudinary URL
+        await category.save();
+        res.json(category);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error uploading category image' });
+    }
+});
+
+// DELETE /api/admin/categories/:id/image - Remove the tile image (the storefront falls back to a product photo)
+router.delete('/categories/:id/image', protect, admin, async (req, res) => {
+    try {
+        const category = await Category.findById(req.params.id);
+        if (!category) {
+            return res.status(404).json({ message: 'Category not found' });
+        }
+        if (category.image) await destroyCloudinaryImage(category.image);
+        category.image = null;
+        await category.save();
+        res.json(category);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error removing category image' });
     }
 });
 

@@ -7,7 +7,8 @@ import { getImageUrl } from '../utils/image';
 import { formatNaira, getSalePrice } from '../utils/price';
 import { stockMode, getStock, getTotalStock, isSoldOut as productSoldOut, isSizeAvailable } from '../utils/stock';
 
-const ProductCard = ({ product }) => {
+// `compact` swaps the inline colour/size pickers for a "Choose options" link - used in the homepage rows
+const ProductCard = ({ product, compact = false }) => {
     const { addToCart, getRemainingStock } = useCart();
     const [selectedColors, setSelectedColors] = useState([]);
     // Pre-select the first size that's still in stock
@@ -65,6 +66,11 @@ const ProductCard = ({ product }) => {
         : remaining !== null && remaining < 1);
     const needsColorChoice = needsColor && selectedColors.length === 0;
     const canAdd = !isSoldOut && !cartFull && !needsColorChoice;
+
+    // Some older products have an empty size ('') saved - don't show it
+    const sizeOptions = product.sizes.filter(Boolean);
+    const hasOptions = product.colors.length > 0 || sizeOptions.length > 0;
+    const MAX_DOTS = 5;
 
     const handleSizeChange = (size) => {
         setSelectedSize(size);
@@ -179,82 +185,120 @@ const ProductCard = ({ product }) => {
                 </div>
             </Link>
 
-            <div className="flex flex-col flex-1 px-1">
-                <div className="mb-2 md:mb-4">
-                    <div className="flex gap-1 md:gap-2 flex-wrap pb-1">
-                        {product.colors.map((color, idx) => {
-                            const isSelected = selectedColors.some(c => c.hex === color.hex && c.name === color.name);
-                            const unavailable = isSoldOut || isColorUnavailable(color);
-                            return (
-                                <button
-                                    key={`${color.hex}-${color.name}-${idx}`}
-                                    onClick={() => toggleColor(color)}
-                                    disabled={unavailable}
-                                    className={clsx(
-                                        "w-5 h-5 md:w-6 md:h-6 rounded-full border border-gray-200 relative transition-transform duration-200 overflow-hidden",
-                                        unavailable ? "opacity-30 cursor-not-allowed" : "hover:scale-110",
-                                        isSelected ? "ring-2 ring-brand-black ring-offset-1" : ""
-                                    )}
-                                    style={{ backgroundColor: color.hex }}
-                                    title={unavailable ? `${color.name} - sold out${selectedSize ? ` in ${selectedSize}` : ''}` : color.name}
-                                >
-                                    {unavailable && !isSoldOut && (
-                                        <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                                            <span className="block w-[140%] h-px bg-gray-700 rotate-45" />
-                                        </span>
-                                    )}
-                                    {isSelected && (
-                                        <span className="absolute inset-0 flex items-center justify-center">
-                                            <Check className={clsx("w-4 h-4", color.hex === '#FFFFFF' ? 'text-black' : 'text-white')} />
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <div className="mb-3 md:mb-6">
-                    <div className="flex gap-1 md:gap-2 flex-wrap">
-                        {product.sizes.map((size) => {
-                            // A size is crossed out when no colour has it left
-                            const unavailable = isSoldOut || !isSizeAvailable(product, size, product.colors.length > 0 ? undefined : '');
-                            return (
-                                <button
-                                    key={size}
-                                    onClick={() => handleSizeChange(size)}
-                                    disabled={unavailable}
-                                    className={clsx(
-                                        "px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-medium border transition-colors",
-                                        unavailable
-                                            ? "bg-gray-50 text-gray-300 border-gray-200 line-through cursor-not-allowed"
-                                            : selectedSize === size
-                                                ? "bg-brand-black text-brand-white border-brand-black"
-                                                : "bg-white text-brand-gray border-gray-200 hover:border-brand-black hover:text-brand-black"
-                                    )}
-                                >
-                                    {size}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <button
-                    onClick={handleAddToCart}
-                    disabled={!canAdd}
-                    className={clsx(
-                        "w-full py-2 md:py-3 text-[10px] md:text-sm tracking-wider md:tracking-widest uppercase font-medium transition-all duration-300 border",
-                        !canAdd
-                            ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
-                            : isAdded
-                                ? "bg-green-600 text-white border-green-600"
-                                : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
+            {compact ? (
+                <div className="flex flex-col flex-1 justify-end px-1">
+                    {product.colors.length > 0 && (
+                        <div className="flex items-center gap-1 mb-3" aria-label={`${product.colors.length} colours`}>
+                            {product.colors.slice(0, MAX_DOTS).map((color, idx) => (
+                                <span key={`${color.hex}-${color.name}-${idx}`} title={color.name} className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }} />
+                            ))}
+                            {product.colors.length > MAX_DOTS && (
+                                <span className="text-[10px] md:text-xs text-brand-gray ml-0.5">+{product.colors.length - MAX_DOTS}</span>
+                            )}
+                        </div>
                     )}
-                >
-                    {isSoldOut ? "Sold Out" : needsColorChoice ? "Select a Colour" : cartFull ? "All in Cart" : isAdded ? "Added" : "Add to Cart"}
-                </button>
-            </div>
+                    {hasOptions && !isSoldOut ? (
+                        <Link
+                            to={`/product/${product.id}`}
+                            className="w-full py-2 md:py-3 text-center text-[10px] md:text-sm tracking-wider md:tracking-widest uppercase font-medium transition-all duration-300 border bg-white text-brand-black border-brand-black hover:bg-brand-black hover:text-white"
+                        >
+                            Choose options
+                        </Link>
+                    ) : (
+                        <button
+                            onClick={handleAddToCart}
+                            disabled={!canAdd}
+                            className={clsx(
+                                "w-full py-2 md:py-3 text-[10px] md:text-sm tracking-wider md:tracking-widest uppercase font-medium transition-all duration-300 border",
+                                !canAdd
+                                    ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
+                                    : isAdded
+                                        ? "bg-green-600 text-white border-green-600"
+                                        : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
+                            )}
+                        >
+                            {isSoldOut ? "Sold Out" : cartFull ? "All in Cart" : isAdded ? "Added" : "Add to Cart"}
+                        </button>
+                    )}
+                </div>
+            ) : (
+                <div className="flex flex-col flex-1 px-1">
+                    <div className="mb-2 md:mb-4">
+                        <div className="flex gap-1 md:gap-2 flex-wrap pb-1">
+                            {product.colors.map((color, idx) => {
+                                const isSelected = selectedColors.some(c => c.hex === color.hex && c.name === color.name);
+                                const unavailable = isSoldOut || isColorUnavailable(color);
+                                return (
+                                    <button
+                                        key={`${color.hex}-${color.name}-${idx}`}
+                                        onClick={() => toggleColor(color)}
+                                        disabled={unavailable}
+                                        className={clsx(
+                                            "w-5 h-5 md:w-6 md:h-6 rounded-full border border-gray-200 relative transition-transform duration-200 overflow-hidden",
+                                            unavailable ? "opacity-30 cursor-not-allowed" : "hover:scale-110",
+                                            isSelected ? "ring-2 ring-brand-black ring-offset-1" : ""
+                                        )}
+                                        style={{ backgroundColor: color.hex }}
+                                        title={unavailable ? `${color.name} - sold out${selectedSize ? ` in ${selectedSize}` : ''}` : color.name}
+                                    >
+                                        {unavailable && !isSoldOut && (
+                                            <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                                                <span className="block w-[140%] h-px bg-gray-700 rotate-45" />
+                                            </span>
+                                        )}
+                                        {isSelected && (
+                                            <span className="absolute inset-0 flex items-center justify-center">
+                                                <Check className={clsx("w-4 h-4", color.hex === '#FFFFFF' ? 'text-black' : 'text-white')} />
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="mb-3 md:mb-6">
+                        <div className="flex gap-1 md:gap-2 flex-wrap">
+                            {sizeOptions.map((size) => {
+                                // A size is crossed out when no colour has it left
+                                const unavailable = isSoldOut || !isSizeAvailable(product, size, product.colors.length > 0 ? undefined : '');
+                                return (
+                                    <button
+                                        key={size}
+                                        onClick={() => handleSizeChange(size)}
+                                        disabled={unavailable}
+                                        className={clsx(
+                                            "px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-medium border transition-colors",
+                                            unavailable
+                                                ? "bg-gray-50 text-gray-300 border-gray-200 line-through cursor-not-allowed"
+                                                : selectedSize === size
+                                                    ? "bg-brand-black text-brand-white border-brand-black"
+                                                    : "bg-white text-brand-gray border-gray-200 hover:border-brand-black hover:text-brand-black"
+                                        )}
+                                    >
+                                        {size}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleAddToCart}
+                        disabled={!canAdd}
+                        className={clsx(
+                            "w-full py-2 md:py-3 text-[10px] md:text-sm tracking-wider md:tracking-widest uppercase font-medium transition-all duration-300 border",
+                            !canAdd
+                                ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
+                                : isAdded
+                                    ? "bg-green-600 text-white border-green-600"
+                                    : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
+                        )}
+                    >
+                        {isSoldOut ? "Sold Out" : needsColorChoice ? "Select a Colour" : cartFull ? "All in Cart" : isAdded ? "Added" : "Add to Cart"}
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

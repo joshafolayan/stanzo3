@@ -210,11 +210,12 @@ const ProductDetails = () => {
                         )}
 
                         {/* Sizes */}
-                        {product.sizes && product.sizes.length > 0 && (
+                        {/* Some older products have an empty size ('') saved - don't show it */}
+                        {product.sizes?.some(Boolean) && (
                             <div className="mb-10">
                                 <span className="block text-sm font-medium text-brand-black uppercase tracking-widest mb-3">Size</span>
                                 <div className="flex gap-3 flex-wrap">
-                                    {product.sizes.map(size => {
+                                    {product.sizes.filter(Boolean).map(size => {
                                         // Sizes sold out for the chosen colour (or for every colour, if none chosen yet) are crossed out
                                         const unavailable = isSoldOut || !isSizeAvailable(product, size, colorForSizes);
                                         return (

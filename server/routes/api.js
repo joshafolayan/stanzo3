@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Category = require('../models/Category');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
@@ -17,6 +18,55 @@ router.get('/products', async (req, res) => {
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching products' });
+    }
+});
+
+// Orders in these statuses count as sold (pending and cancelled ones don't)
+const SOLD_STATUSES = ['paid', 'processing', 'shipped', 'delivered', 'completed'];
+
+// GET /api/products/top-sellers - Products ranked by units sold, best first
+router.get('/products/top-sellers', async (req, res) => {
+    try {
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 12, 1), 48);
+        const ranked = await Order.aggregate([
+            { $match: { status: { $in: SOLD_STATUSES } } },
+            { $unwind: '$items' },
+            { $group: { _id: '$items.product', sold: { $sum: '$items.quantity' } } },
+            { $sort: { sold: -1, _id: 1 } }, // _id keeps ties in a stable order
+            { $limit: limit * 2 } // headroom for products that have since been deleted
+        ]);
+        const products = await Product.find({ _id: { $in: ranked.map(r => r._id) } }).lean();
+        const byId = new Map(products.map(p => [String(p._id), p]));
+        res.json(ranked.map(r => byId.get(String(r._id))).filter(Boolean).slice(0, limit));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error fetching top sellers' });
+    }
+});
+
+// GET /api/categories - Categories that have products, most products first, each with a tile image
+router.get('/categories', async (req, res) => {
+    try {
+        const [categories, stats] = await Promise.all([
+            Category.find({}).lean(),
+            // Newest product's first photo stands in for categories without their own image
+            Product.aggregate([
+                { $sort: { createdAt: -1 } },
+                { $group: { _id: '$category', count: { $sum: 1 }, image: { $first: { $arrayElemAt: ['$images', 0] } } } }
+            ])
+        ]);
+        const statsByName = new Map(stats.map(s => [s._id, s]));
+        res.json(categories
+            .filter(c => statsByName.has(c.name))
+            .map(c => ({
+                name: c.name,
+                image: c.image || statsByName.get(c.name).image || null,
+                productCount: statsByName.get(c.name).count
+            }))
+            .sort((a, b) => b.productCount - a.productCount));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error fetching categories' });
     }
 });
 

@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import ProductGrid from '../components/ProductGrid';
 import ProductRow from '../components/ProductRow';
+import CategoryTiles from '../components/CategoryTiles';
 import TrustStrip from '../components/TrustStrip';
 import Footer from '../components/Footer';
 import WhatsAppButton from '../components/WhatsAppButton';
@@ -24,12 +25,15 @@ const StoreFront = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [topSellers, setTopSellers] = useState([]);
+    const [categories, setCategories] = useState([]);
 
     const [searchParams] = useSearchParams();
     const location = useLocation();
     const searchQuery = searchParams.get('q') || '';
     const filter = FILTERS[searchParams.get('filter')] ? searchParams.get('filter') : null;
-    const isHome = location.pathname === '/' && !searchQuery && !filter;
+    const category = searchParams.get('category') || '';
+    const isHome = location.pathname === '/' && !searchQuery && !filter && !category;
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -45,6 +49,14 @@ const StoreFront = () => {
         };
 
         fetchProducts();
+
+        // Extra homepage sections - if either fails, its section just doesn't show
+        axios.get('/api/products/top-sellers?limit=24')
+            .then(({ data }) => setTopSellers(data))
+            .catch(err => console.error('Failed to fetch top sellers:', err));
+        axios.get('/api/categories')
+            .then(({ data }) => setCategories(data))
+            .catch(err => console.error('Failed to fetch categories:', err));
     }, []);
 
     const searchedProducts = products.filter(product => {
@@ -65,16 +77,21 @@ const StoreFront = () => {
     });
 
     let filteredProducts = searchedProducts;
-    if (filter === 'deals') filteredProducts = searchedProducts.filter(isDeal);
-    if (filter === 'new') filteredProducts = [...searchedProducts].sort(newestFirst);
+    if (category) filteredProducts = filteredProducts.filter(product => product.category?.toLowerCase() === category.toLowerCase());
+    if (filter === 'deals') filteredProducts = filteredProducts.filter(isDeal);
+    if (filter === 'new') filteredProducts = [...filteredProducts].sort(newestFirst);
 
     // Homepage rows only show what can be bought right now
     const inStock = products.filter(product => !isSoldOut(product));
     const deals = inStock.filter(isDeal).slice(0, ROW_SIZE);
     const newArrivals = [...inStock].sort(newestFirst).slice(0, ROW_SIZE);
+    const bestSellers = topSellers.filter(product => !isSoldOut(product)).slice(0, ROW_SIZE);
 
     let heading = { title: 'All products', subtitle: null };
     if (filter) heading = FILTERS[filter];
+    // Show the category as it's spelled in the shop, not as typed in the URL
+    const categoryName = products.find(product => product.category?.toLowerCase() === category.toLowerCase())?.category || category;
+    if (category) heading = { title: filter ? `${heading.title}: ${categoryName}` : categoryName, subtitle: heading.subtitle };
     if (searchQuery) heading = { title: `Search results for: "${searchQuery}"`, subtitle: null };
 
     return (
@@ -86,6 +103,8 @@ const StoreFront = () => {
                     <>
                         <Hero featured={deals.length > 0 ? deals : newArrivals} hasDeals={deals.length > 0} />
                         <ProductRow title={FILTERS.deals.title} subtitle={FILTERS.deals.subtitle} seeAllTo="/shop?filter=deals" products={deals} />
+                        <CategoryTiles categories={categories} />
+                        <ProductRow title="Top Sellers" subtitle="Customer favourites" products={bestSellers} />
                         <ProductRow title={FILTERS.new.title} subtitle={FILTERS.new.subtitle} seeAllTo="/shop?filter=new" products={newArrivals} />
                         <TrustStrip />
                     </>

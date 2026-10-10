@@ -6,6 +6,11 @@ const categorySchema = new mongoose.Schema({
         required: true,
         trim: true,
         unique: true
+    },
+    // Tile image on the storefront (Cloudinary URL). Falls back to a product photo when empty.
+    image: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true

@@ -39,8 +39,8 @@ const ProductRow = ({ title, subtitle, seeAllTo, products }) => {
             {/* Side padding leaves room for the card's hover pop, which would otherwise be clipped */}
             <div ref={scroller} className="flex gap-3 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-px-4 no-scrollbar -mx-4 px-4 py-6">
                 {products.map(product => (
-                    <div key={product.id} className="snap-start shrink-0 w-[46%] sm:w-[31%] lg:w-[23%]">
-                        <ProductCard product={product} />
+                    <div key={product.id} className="flex snap-start shrink-0 w-[46%] sm:w-[31%] lg:w-[23%]">
+                        <ProductCard product={product} compact />
                     </div>
                 ))}
             </div>
