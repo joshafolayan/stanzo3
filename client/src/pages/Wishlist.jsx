@@ -29,11 +29,11 @@ const Wishlist = () => {
     const saved = [...wishlistIds].reverse().map(id => byId.get(id)).filter(Boolean);
 
     return (
-        <div className="min-h-screen bg-white flex flex-col font-sans">
+        <div className="min-h-screen bg-brand-ivory flex flex-col font-sans">
             <Header />
 
             <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20 w-full">
-                <div className="mb-8 pt-8 border-b pb-4">
+                <div className="mb-8 pt-8 border-b border-brand-line pb-4">
                     <h1 className="text-2xl md:text-3xl font-serif text-brand-black">Wishlist</h1>
                     {!loading && !error && (
                         <p className="text-brand-gray mt-2">

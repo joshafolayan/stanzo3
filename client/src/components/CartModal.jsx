@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, ShoppingBag } from 'lucide-react';
 import clsx from 'clsx';
 
 const CartModal = ({ onCheckout }) => {
@@ -20,9 +20,9 @@ const CartModal = ({ onCheckout }) => {
             <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
 
                 {/* Header */}
-                <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-                    <h2 className="text-xl font-bold text-blue-900 flex items-center gap-2">
-                        🛒 Your Cart
+                <div className="p-4 border-b border-brand-line flex justify-between items-center bg-brand-ivory">
+                    <h2 className="text-xl font-serif text-brand-black">
+                        Your Cart
                     </h2>
                     <button
                         onClick={() => setIsCartOpen(false)}
@@ -36,11 +36,11 @@ const CartModal = ({ onCheckout }) => {
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {cart.length === 0 ? (
                         <div className="text-center py-12 text-gray-500">
-                            <span className="text-6xl block mb-4">🛒</span>
+                            <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-brand-line" strokeWidth={1.25} />
                             <p className="text-lg mb-6">Your cart is empty</p>
                             <button
                                 onClick={() => setIsCartOpen(false)}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                className="px-6 py-2 bg-brand-black text-white rounded-lg hover:bg-brand-charcoal transition"
                             >
                                 Continue Shopping
                             </button>
@@ -77,7 +77,7 @@ const CartModal = ({ onCheckout }) => {
                                                         updateQuantity(item.cartId, (item.quantity || 1) - 1);
                                                     }
                                                 }}
-                                                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-red-50 hover:border-red-400 hover:text-red-500 transition-colors font-bold text-lg leading-none"
+                                                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-brand-sale-tint hover:border-brand-sale hover:text-brand-sale transition-colors font-bold text-lg leading-none"
                                             >
                                                 −
                                             </button>
@@ -105,23 +105,23 @@ const CartModal = ({ onCheckout }) => {
                                                         updateQuantity(item.cartId, 1);
                                                     }
                                                 }}
-                                                className="w-12 text-center font-semibold text-gray-800 text-sm border border-gray-300 rounded-md py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                                className="w-12 text-center font-semibold text-gray-800 text-sm border border-gray-300 rounded-md py-0.5 focus:outline-none focus:ring-2 focus:ring-brand-accent"
                                             />
                                             <button
                                                 onClick={() => updateQuantity(item.cartId, (item.quantity || 1) + 1)}
                                                 disabled={atMax}
                                                 title={atMax ? 'No more in stock' : undefined}
-                                                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-colors font-bold text-lg leading-none disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-gray-300 disabled:hover:text-gray-600 disabled:cursor-not-allowed"
+                                                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-brand-ivory hover:border-brand-accent hover:text-brand-accent transition-colors font-bold text-lg leading-none disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-gray-300 disabled:hover:text-gray-600 disabled:cursor-not-allowed"
                                             >
                                                 +
                                             </button>
-                                            {atMax && <span className="text-[10px] text-red-500 ml-1">Max</span>}
+                                            {atMax && <span className="text-[10px] text-brand-sale ml-1">Max</span>}
                                         </div>
 
                                         {/* Price + remove */}
                                         <div className="flex items-center gap-2">
                                             <div className="text-right">
-                                                <span className="font-bold text-red-500 text-sm">
+                                                <span className="font-bold text-brand-black text-sm">
                                                     ₦{(item.price * (item.quantity || 1)).toLocaleString()}
                                                 </span>
                                                 {(item.quantity || 1) > 1 && (
@@ -130,7 +130,7 @@ const CartModal = ({ onCheckout }) => {
                                                     </p>
                                                 )}
                                                 {item.isWholesale && (
-                                                    <p className="text-[10px] font-semibold text-green-600">Wholesale price</p>
+                                                    <p className="text-[10px] font-semibold text-brand-accent">Wholesale price</p>
                                                 )}
                                                 {item.wholesaleOffer && (
                                                     <p className="text-[10px] text-gray-500">₦{item.wholesaleOffer.price.toLocaleString()} each for {item.wholesaleOffer.minQty}+</p>
@@ -138,7 +138,7 @@ const CartModal = ({ onCheckout }) => {
                                             </div>
                                             <button
                                                 onClick={() => removeFromCart(item.cartId)}
-                                                className="text-gray-300 hover:text-red-500 transition-colors"
+                                                className="text-gray-300 hover:text-brand-sale transition-colors"
                                                 title="Remove item"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -164,7 +164,7 @@ const CartModal = ({ onCheckout }) => {
                                 setIsCartOpen(false);
                                 onCheckout();
                             }}
-                            className="w-full py-3 bg-gradient-to-r from-blue-700 to-indigo-800 text-white rounded-lg font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                            className="w-full py-3.5 bg-brand-black text-white text-sm uppercase tracking-widest font-medium hover:bg-brand-charcoal transition-colors"
                         >
                             Proceed to Checkout
                         </button>

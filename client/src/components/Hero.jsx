@@ -84,7 +84,7 @@ const Hero = ({ banners = [], featured = [], hasDeals = false }) => {
         >
             <div className="grid md:grid-cols-2 gap-8 items-center px-6 py-10 md:px-12 md:py-16">
                 <div>
-                    <p className="text-[10px] md:text-xs uppercase tracking-[0.25em] text-pink-400 font-medium mb-4">
+                    <p className="text-[10px] md:text-xs uppercase tracking-[0.25em] text-brand-accent-light font-medium mb-4">
                         Delivery across Nigeria · Store pickup
                     </p>
                     <h1 className="text-3xl md:text-5xl font-serif leading-tight mb-4">

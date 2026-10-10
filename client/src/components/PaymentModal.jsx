@@ -150,8 +150,8 @@ const PaymentModal = ({ isOpen, onClose }) => {
 
             <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="p-6 border-b flex justify-between items-center shrink-0">
-                    <h2 className="text-xl font-bold text-blue-900">💳 Payment Details</h2>
-                    <button onClick={onClose}><X className="text-gray-500 hover:text-red-500" /></button>
+                    <h2 className="text-xl font-serif text-brand-black">Payment Details</h2>
+                    <button onClick={onClose}><X className="text-gray-500 hover:text-brand-sale" /></button>
                 </div>
 
                 <div className="p-6 space-y-6 overflow-y-auto">
@@ -159,7 +159,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                     {/* Step 1 — Delivery Method */}
                     <div>
                         <p className="text-sm font-semibold text-gray-700 mb-3">
-                            How would you like to receive your order? <span className="text-red-500">*</span>
+                            How would you like to receive your order? <span className="text-brand-sale">*</span>
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                             {/* Store Pickup */}
@@ -167,7 +167,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                 onClick={() => handleDeliverySelect('store_pickup')}
                                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                                     deliveryMethod === 'store_pickup'
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                        ? 'border-brand-accent bg-brand-ivory text-brand-black'
                                         : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
                             >
@@ -181,7 +181,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                 onClick={() => handleDeliverySelect('delivery')}
                                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 relative ${
                                     deliveryMethod === 'delivery'
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                        ? 'border-brand-accent bg-brand-ivory text-brand-black'
                                         : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
                             >
@@ -196,13 +196,13 @@ const PaymentModal = ({ isOpen, onClose }) => {
                     {deliveryMethod && (
                         <>
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-                                <h3 className="text-sm font-semibold text-blue-900">
+                                <h3 className="text-sm font-semibold text-brand-black">
                                     Your Information
-                                    {user && <span className="ml-2 text-xs font-normal text-green-600">✓ Pre-filled from your account</span>}
+                                    {user && <span className="ml-2 text-xs font-normal text-brand-olive">✓ Pre-filled from your account</span>}
                                 </h3>
 
                                 <div>
-                                    <label className="block text-xs text-gray-600 mb-1">Full Name <span className="text-red-500">*</span></label>
+                                    <label className="block text-xs text-gray-600 mb-1">Full Name <span className="text-brand-sale">*</span></label>
                                     <input
                                         type="text"
                                         name="name"
@@ -210,12 +210,12 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                         onChange={handleChange}
                                         placeholder="e.g. John Doe"
                                         readOnly={!!user}
-                                        className={`w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none ${user ? 'bg-gray-100 text-gray-600 cursor-default' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}`}
+                                        className={`w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none ${user ? 'bg-gray-100 text-gray-600 cursor-default' : 'focus:ring-2 focus:ring-brand-accent focus:border-brand-accent'}`}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs text-gray-600 mb-1">Email Address {!user ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}</label>
+                                    <label className="block text-xs text-gray-600 mb-1">Email Address {!user ? <span className="text-brand-sale">*</span> : <span className="text-gray-400">(optional)</span>}</label>
                                     <input
                                         type="email"
                                         name="email"
@@ -223,12 +223,12 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                         onChange={handleChange}
                                         placeholder="e.g. john@email.com"
                                         readOnly={!!user}
-                                        className={`w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none ${user ? 'bg-gray-100 text-gray-600 cursor-default' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}`}
+                                        className={`w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none ${user ? 'bg-gray-100 text-gray-600 cursor-default' : 'focus:ring-2 focus:ring-brand-accent focus:border-brand-accent'}`}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs text-gray-600 mb-1">Phone Number <span className="text-red-500">*</span></label>
+                                    <label className="block text-xs text-gray-600 mb-1">Phone Number <span className="text-brand-sale">*</span></label>
                                     <input
                                         type="tel"
                                         name="phone"
@@ -236,20 +236,20 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                         onChange={handleChange}
                                         placeholder="e.g. 08012345678"
                                         readOnly={!!(user && user.phone)}
-                                        className={`w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none ${user && user.phone ? 'bg-gray-100 text-gray-600 cursor-default' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}`}
+                                        className={`w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none ${user && user.phone ? 'bg-gray-100 text-gray-600 cursor-default' : 'focus:ring-2 focus:ring-brand-accent focus:border-brand-accent'}`}
                                     />
                                 </div>
 
                                 {!user && (
                                     <div>
-                                        <label className="block text-xs text-gray-600 mb-1">Create Password <span className="text-red-500">*</span></label>
+                                        <label className="block text-xs text-gray-600 mb-1">Create Password <span className="text-brand-sale">*</span></label>
                                         <input
                                             type="password"
                                             name="password"
                                             value={customerInfo.password}
                                             onChange={handleChange}
                                             placeholder="At least 6 characters"
-                                            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
                                         />
                                     </div>
                                 )}
@@ -257,15 +257,15 @@ const PaymentModal = ({ isOpen, onClose }) => {
 
                             {/* Delivery-only fields */}
                             {deliveryMethod === 'delivery' && (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-                                    <h3 className="text-sm font-semibold text-blue-900">🚚 Delivery Details</h3>
+                                <div className="bg-brand-ivory border border-brand-line rounded-lg p-4 space-y-3">
+                                    <h3 className="text-sm font-semibold text-brand-black">Delivery Details</h3>
 
                                     <div>
-                                        <label className="block text-xs text-gray-600 mb-1">Delivery State <span className="text-red-500">*</span></label>
+                                        <label className="block text-xs text-gray-600 mb-1">Delivery State <span className="text-brand-sale">*</span></label>
                                         <select
                                             value={selectedState}
                                             onChange={(e) => setSelectedState(e.target.value)}
-                                            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                                            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none bg-white"
                                         >
                                             <option value="">-- Choose a State --</option>
                                             {NIGERIAN_STATES.map((state) => (
@@ -275,13 +275,13 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs text-gray-600 mb-1">Full Delivery Address <span className="text-red-500">*</span></label>
+                                        <label className="block text-xs text-gray-600 mb-1">Full Delivery Address <span className="text-brand-sale">*</span></label>
                                         <textarea
                                             value={address}
                                             onChange={(e) => setAddress(e.target.value)}
                                             placeholder="e.g. 12 Adeola Street, Ikeja, Lagos"
                                             rows={2}
-                                            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                                            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
                                         />
                                     </div>
                                 </div>
@@ -289,17 +289,17 @@ const PaymentModal = ({ isOpen, onClose }) => {
 
                             {/* Store Pickup info */}
                             {deliveryMethod === 'store_pickup' && (
-                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                    <p className="text-sm font-semibold text-amber-800 mb-1">🏪 Store Pickup</p>
-                                    <p className="text-xs text-amber-700">
+                                <div className="bg-brand-accent-tint border border-brand-accent/30 rounded-lg p-4">
+                                    <p className="text-sm font-semibold text-brand-accent-dark mb-1">Store Pickup</p>
+                                    <p className="text-xs text-brand-accent-dark">
                                         After payment, we'll contact you to arrange a convenient pickup time at our store.
                                     </p>
                                 </div>
                             )}
 
                             {/* Bank Details */}
-                            <div className="bg-red-50 border-2 border-red-100 rounded-xl p-6">
-                                <h3 className="text-lg font-semibold text-blue-900 mb-4">Bank Transfer Details</h3>
+                            <div className="bg-brand-ivory border border-brand-line rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-brand-black mb-4">Bank Transfer Details</h3>
                                 <div className="bg-white rounded-lg p-4 space-y-3 shadow-sm">
                                     <div className="flex justify-between border-b pb-2">
                                         <span className="text-gray-500">Bank Name</span>
@@ -315,7 +315,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                     </div>
                                     <div className="flex justify-between pt-2">
                                         <span className="text-gray-500">Amount</span>
-                                        <span className="font-bold text-red-500 text-lg">₦{cartTotal.toLocaleString()}</span>
+                                        <span className="font-bold text-brand-black text-lg">₦{cartTotal.toLocaleString()}</span>
                                     </div>
                                 </div>
                                 <p className="text-sm text-gray-500 italic mt-4 text-center">
@@ -323,15 +323,15 @@ const PaymentModal = ({ isOpen, onClose }) => {
                                 </p>
                             </div>
 
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-                                <CheckCircle className="text-green-600 w-6 h-6 flex-shrink-0" />
-                                <div className="text-green-800 text-sm">
+                            <div className="bg-brand-olive-tint border border-brand-olive/30 rounded-lg p-4 flex items-center gap-3">
+                                <CheckCircle className="text-brand-olive w-6 h-6 flex-shrink-0" />
+                                <div className="text-brand-olive text-sm">
                                     <strong>Order Confirmed!</strong> Click below to notify us via WhatsApp after payment.
                                 </div>
                             </div>
 
                             {error && (
-                                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                                <div className="bg-brand-sale-tint text-brand-sale p-3 rounded-lg text-sm">
                                     {error}
                                 </div>
                             )}
@@ -351,7 +351,7 @@ const PaymentModal = ({ isOpen, onClose }) => {
 
                     {/* Error shown before method is chosen */}
                     {!deliveryMethod && error && (
-                        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                        <div className="bg-brand-sale-tint text-brand-sale p-3 rounded-lg text-sm">
                             {error}
                         </div>
                     )}

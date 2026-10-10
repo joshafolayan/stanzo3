@@ -119,7 +119,7 @@ const ProductCard = ({ product, compact = false }) => {
                         <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
                             <span className={clsx(
                                 "text-brand-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full tracking-wider uppercase",
-                                isSoldOut ? "bg-brand-black" : "bg-red-600"
+                                isSoldOut ? "bg-brand-black" : "bg-brand-sale"
                             )}>
                                 {isSoldOut ? 'Sold Out' : `-${product.discountPercentage}%`}
                             </span>
@@ -166,8 +166,8 @@ const ProductCard = ({ product, compact = false }) => {
                     )}
 
                     {imageFailed && (
-                        <div className="flex h-full w-full bg-gradient-to-br from-indigo-500 to-purple-600 items-center justify-center text-white text-center p-4">
-                            <span className="font-bold text-xl">{product.name}</span>
+                        <div className="flex h-full w-full bg-brand-line items-center justify-center text-brand-gray text-center p-4">
+                            <span className="font-serif text-lg">{product.name}</span>
                         </div>
                     )}
                 </div>
@@ -178,16 +178,16 @@ const ProductCard = ({ product, compact = false }) => {
                         {product.discountPercentage > 0 && (
                             <span className="line-through text-gray-400 font-normal text-[10px] md:text-sm">{formatNaira(product.price)}</span>
                         )}
-                        <span className={product.discountPercentage > 0 ? "text-red-600" : "text-brand-black"}>
+                        <span className={product.discountPercentage > 0 ? "text-brand-sale" : "text-brand-black"}>
                             {formatNaira(getSalePrice(product))}
                         </span>
                     </p>
                     {(isLowStock || hasWholesale(product)) && (
                         <div className="-mt-1 md:-mt-3 mb-2 space-y-0.5 text-[10px] md:text-xs font-medium">
                             {hasWholesale(product) && (
-                                <p className="text-green-700">{formatNaira(product.wholesalePrice)} each for {product.wholesaleMinQty}+</p>
+                                <p className="text-brand-accent">{formatNaira(product.wholesalePrice)} each for {product.wholesaleMinQty}+</p>
                             )}
-                            {isLowStock && <p className="text-red-600">Only {totalStock} left</p>}
+                            {isLowStock && <p className="text-brand-sale">Only {totalStock} left</p>}
                         </div>
                     )}
                 </div>
@@ -221,7 +221,7 @@ const ProductCard = ({ product, compact = false }) => {
                                 !canAdd
                                     ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
                                     : isAdded
-                                        ? "bg-green-600 text-white border-green-600"
+                                        ? "bg-brand-olive text-white border-brand-olive"
                                         : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
                             )}
                         >
@@ -299,7 +299,7 @@ const ProductCard = ({ product, compact = false }) => {
                             !canAdd
                                 ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
                                 : isAdded
-                                    ? "bg-green-600 text-white border-green-600"
+                                    ? "bg-brand-olive text-white border-brand-olive"
                                     : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
                         )}
                     >

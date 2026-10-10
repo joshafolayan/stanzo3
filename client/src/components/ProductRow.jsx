@@ -66,10 +66,10 @@ const ProductRow = ({ title, subtitle, seeAllTo, products }) => {
                             See all
                         </Link>
                     )}
-                    <button onClick={() => scroll(-1)} aria-label={`Scroll ${title} left`} className="hidden md:flex p-2 border border-gray-200 rounded-full hover:border-brand-black transition-colors">
+                    <button onClick={() => scroll(-1)} aria-label={`Scroll ${title} left`} className="hidden md:flex p-2 border border-brand-line rounded-full hover:border-brand-black transition-colors">
                         <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <button onClick={() => scroll(1)} aria-label={`Scroll ${title} right`} className="hidden md:flex p-2 border border-gray-200 rounded-full hover:border-brand-black transition-colors">
+                    <button onClick={() => scroll(1)} aria-label={`Scroll ${title} right`} className="hidden md:flex p-2 border border-brand-line rounded-full hover:border-brand-black transition-colors">
                         <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>

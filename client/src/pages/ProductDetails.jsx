@@ -86,7 +86,7 @@ const ProductDetails = () => {
     };
 
     return (
-        <div className="min-h-screen bg-brand-white">
+        <div className="min-h-screen bg-brand-ivory">
             <Header />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
@@ -163,16 +163,16 @@ const ProductDetails = () => {
                             {product.discountPercentage > 0 && (
                                 <span className="line-through text-gray-400 mr-3">{formatNaira(product.price)}</span>
                             )}
-                            <span className="font-medium text-brand-black">
+                            <span className={clsx("font-medium", product.discountPercentage > 0 ? "text-brand-sale" : "text-brand-black")}>
                                 {formatNaira(getSalePrice(product))}
                             </span>
                         </div>
 
-                        {isSoldOut && <p className="text-sm font-medium text-red-600 mb-8 uppercase tracking-widest">Sold out</p>}
-                        {isLowStock && <p className="text-sm font-medium text-red-600 mb-8">Only {optionStock} left{isVariant ? ' in this option' : ' in stock'}</p>}
+                        {isSoldOut && <p className="text-sm font-medium text-brand-sale mb-8 uppercase tracking-widest">Sold out</p>}
+                        {isLowStock && <p className="text-sm font-medium text-brand-sale mb-8">Only {optionStock} left{isVariant ? ' in this option' : ' in stock'}</p>}
 
                         {hasWholesale(product) && !isSoldOut && (
-                            <p className="mb-8 self-start bg-green-50 text-green-800 text-sm px-4 py-3 rounded-lg">
+                            <p className="mb-8 self-start bg-brand-accent-tint text-brand-accent-dark text-sm px-4 py-3 rounded-lg">
                                 <span className="font-semibold">Wholesale:</span> {formatNaira(product.wholesalePrice)} each when you buy {product.wholesaleMinQty} or more
                                 {wholesaleMix && ` (any mix of ${wholesaleMix})`}
                             </p>
@@ -183,7 +183,7 @@ const ProductDetails = () => {
                             <div className="mb-8">
                                 <span className="block text-sm font-medium text-brand-black uppercase tracking-widest mb-3">
                                     Color:{' '}
-                                    <span className={clsx("font-normal", selectedColor ? "text-brand-gray" : "text-red-400 italic")}>
+                                    <span className={clsx("font-normal", selectedColor ? "text-brand-gray" : "text-brand-sale italic")}>
                                         {selectedColor?.name || 'Select a colour'}
                                     </span>
                                 </span>
@@ -260,7 +260,7 @@ const ProductDetails = () => {
                                 !canAdd
                                     ? "bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed"
                                     : isAdded
-                                        ? "bg-green-600 text-white border-green-600"
+                                        ? "bg-brand-olive text-white border-brand-olive"
                                         : "bg-brand-black text-white border-brand-black hover:bg-white hover:text-brand-black"
                             )}
                         >

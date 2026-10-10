@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-white text-brand-black antialiased;
+    @apply bg-brand-ivory text-brand-black antialiased;
     font-family: 'Inter', sans-serif;
   }
   

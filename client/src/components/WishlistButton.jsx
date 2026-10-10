@@ -29,7 +29,7 @@ const WishlistButton = ({ product, className = '', withLabel = false }) => {
                 className
             )}
         >
-            <Heart className={clsx('w-4 h-4 md:w-5 md:h-5', saved ? 'fill-pink-600 text-pink-600' : 'text-brand-black')} strokeWidth={1.5} />
+            <Heart className={clsx('w-4 h-4 md:w-5 md:h-5', saved ? 'fill-brand-accent text-brand-accent' : 'text-brand-black')} strokeWidth={1.5} />
             {withLabel && (saved ? 'Saved' : 'Save to wishlist')}
         </button>
     );

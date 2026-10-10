@@ -55,7 +55,7 @@ const Header = () => {
 
     return (
         <>
-            <header className="fixed top-0 left-0 right-0 z-50 bg-brand-white border-b border-gray-100">
+            <header className="fixed top-0 left-0 right-0 z-50 bg-brand-ivory/95 backdrop-blur border-b border-brand-line">
                 {/* Announcement Bar — the list is rendered twice so the scroll loops seamlessly */}
                 <div className="bg-brand-black text-brand-white text-[10px] md:text-xs tracking-wide font-light h-8 md:h-9 flex items-center overflow-hidden z-50">
                     <div className="marquee-track flex shrink-0 whitespace-nowrap">
@@ -63,7 +63,7 @@ const Header = () => {
                             <div key={copy} className="flex shrink-0" aria-hidden={copy === 1}>
                                 {STORE.announcements.map(text => (
                                     <span key={text} className="flex items-center px-6 md:px-10">
-                                        <span className="w-1 h-1 rounded-full bg-pink-600 mr-6 md:mr-10" />
+                                        <span className="w-1 h-1 rounded-full bg-brand-accent mr-6 md:mr-10" />
                                         {text}
                                     </span>
                                 ))}
@@ -136,7 +136,7 @@ const Header = () => {
                             <Link to="/wishlist" aria-label="Wishlist" className="relative text-brand-black hover:text-brand-gray transition-colors hidden md:flex items-center">
                                 <Heart className="w-5 h-5" strokeWidth={1.5} />
                                 {wishlistIds.length > 0 && (
-                                    <span className="absolute -top-1.5 -right-2 bg-pink-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                                    <span className="absolute -top-1.5 -right-2 bg-brand-accent text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                                         {wishlistIds.length > 9 ? '9+' : wishlistIds.length}
                                     </span>
                                 )}

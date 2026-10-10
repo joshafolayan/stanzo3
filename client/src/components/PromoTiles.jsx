@@ -30,7 +30,7 @@ const PromoTiles = ({ maxDiscount = 0, hasWholesale = false, productCount = 0 })
     );
 
     return (
-        <nav aria-label="Shop shortcuts" className="mt-6 md:mt-8 grid grid-cols-2 md:flex gap-px bg-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
+        <nav aria-label="Shop shortcuts" className="mt-6 md:mt-8 grid grid-cols-2 md:flex gap-px bg-brand-line border border-brand-line rounded-2xl overflow-hidden">
             {tiles.map(tile => tile.href ? (
                 <a key={tile.label} href={tile.href} target="_blank" rel="noopener noreferrer" className={tileClass}>{content(tile)}</a>
             ) : (

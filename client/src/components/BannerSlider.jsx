@@ -66,7 +66,7 @@ const BannerSlider = ({ banners }) => {
                         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/20 md:to-transparent" />
                         <div className="relative h-full flex flex-col justify-center px-6 md:px-12 max-w-xl">
                             {banner.eyebrow && (
-                                <p className="text-[10px] md:text-xs uppercase tracking-[0.25em] text-pink-400 font-medium mb-4">{banner.eyebrow}</p>
+                                <p className="text-[10px] md:text-xs uppercase tracking-[0.25em] text-brand-accent-light font-medium mb-4">{banner.eyebrow}</p>
                             )}
                             <Heading className="text-3xl md:text-5xl font-serif leading-tight mb-4">{banner.title}</Heading>
                             {banner.subtitle && (

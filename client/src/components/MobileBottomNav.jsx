@@ -78,7 +78,7 @@ const MobileBottomNav = () => {
 
             <nav
                 aria-label="Shop navigation"
-                className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-white/95 backdrop-blur border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
+                className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-brand-ivory/95 backdrop-blur border-t border-brand-line pb-[env(safe-area-inset-bottom)]"
             >
                 <div className="flex items-stretch h-16">
                     {tabs.map(tab => (
@@ -93,7 +93,7 @@ const MobileBottomNav = () => {
                     </button>
                     <Link to="/wishlist" className={tabClass(location.pathname === '/wishlist')} aria-current={location.pathname === '/wishlist' ? 'page' : undefined}>
                         <Heart {...iconProps(location.pathname === '/wishlist')} />
-                        <Badge count={wishlistIds.length} className="bg-pink-600" />
+                        <Badge count={wishlistIds.length} className="bg-brand-accent" />
                         Wishlist
                     </Link>
                     <button type="button" onClick={() => setIsCartOpen(true)} className={tabClass(false)}>

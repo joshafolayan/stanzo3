@@ -16,7 +16,7 @@ const Logo = ({ className = '', dark = false }) => {
                 <div className={`
                     absolute bottom-0 right-0 
                     w-2.5 h-2.5 md:w-3 md:h-3 rounded-full 
-                    bg-pink-600 
+                    bg-brand-accent 
                     border-2 ${dark ? 'border-white' : 'border-brand-black'}
                     transition-transform duration-500 ease-out group-hover:scale-110
                 `}></div>

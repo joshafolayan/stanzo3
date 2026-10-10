@@ -67,7 +67,7 @@ const UserDashboard = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-brand-white flex flex-col">
+        <div className="min-h-screen bg-brand-ivory flex flex-col">
             <Header />
             <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 mt-16 md:mt-20">
 
@@ -79,7 +79,7 @@ const UserDashboard = () => {
                     </div>
                     <button
                         onClick={handleLogout}
-                        className="mt-4 md:mt-0 flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors bg-red-50 px-4 py-2 rounded-lg"
+                        className="mt-4 md:mt-0 flex items-center gap-2 text-sm text-brand-sale hover:text-brand-sale font-medium transition-colors bg-brand-sale-tint px-4 py-2 rounded-lg"
                     >
                         <LogOut className="w-4 h-4" /> Sign Out
                     </button>
@@ -164,9 +164,9 @@ const UserDashboard = () => {
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="text-lg font-medium text-brand-black">₦{order.totalAmount.toLocaleString()}</div>
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider mt-1 ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                    'bg-orange-100 text-orange-800'
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider mt-1 ${order.status === 'delivered' ? 'bg-brand-olive-tint text-brand-olive' :
+                                                                order.status === 'cancelled' ? 'bg-brand-sale-tint text-brand-sale' :
+                                                                    'bg-brand-accent-tint text-brand-accent-dark'
                                                             }`}>
                                                             {order.status}
                                                         </span>
@@ -251,7 +251,7 @@ const UserDashboard = () => {
                                                             </div>
                                                             <button
                                                                 onClick={() => removeFromCart(item._id || item.id, item.selectedSize, item.selectedColor)}
-                                                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                                                className="text-gray-400 hover:text-brand-sale transition-colors"
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
                                                             </button>
@@ -319,7 +319,7 @@ const UserDashboard = () => {
                                     </div>
 
                                     {emailMessage && (
-                                        <p className={`text-sm ${emailMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                                        <p className={`text-sm ${emailMessage.type === 'success' ? 'text-brand-olive' : 'text-brand-sale'}`}>
                                             {emailMessage.text}
                                         </p>
                                     )}

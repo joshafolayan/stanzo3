@@ -34,7 +34,7 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-brand-white flex flex-col">
+        <div className="min-h-screen bg-brand-ivory flex flex-col">
             <Header />
             <div className="flex-1 flex items-center justify-center py-20 px-4 md:px-0 mt-16 md:mt-20">
                 <div className="bg-white p-8 md:p-10 rounded-xl shadow-lg border border-gray-100 w-full max-w-md animate-fade-in-up">
@@ -42,7 +42,7 @@ const Login = () => {
                     <p className="text-gray-500 text-center text-sm mb-8">Sign in to your account to continue</p>
 
                     {error && (
-                        <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-6 text-sm text-center border border-red-100">
+                        <div className="bg-brand-sale-tint text-brand-sale p-3 rounded-lg mb-6 text-sm text-center border border-brand-sale/20">
                             {error}
                         </div>
                     )}

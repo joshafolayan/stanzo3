@@ -9,7 +9,7 @@ const ITEMS = [
 ];
 
 const TrustStrip = () => (
-    <section className="mt-12 md:mt-16 grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
+    <section className="mt-12 md:mt-16 grid grid-cols-2 lg:grid-cols-4 gap-px bg-brand-line border border-brand-line rounded-2xl overflow-hidden">
         {ITEMS.map(({ icon, title, text }) => {
             const Icon = icon;
             return (

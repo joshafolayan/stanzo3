@@ -14,9 +14,9 @@ const ProductGrid = ({ products, loading, error }) => {
 
     if (error) {
         return (
-            <div className="text-center py-12 bg-red-50 rounded-xl border border-red-100">
-                <p className="text-red-500 font-bold">Failed to load products.</p>
-                <p className="text-sm text-red-400 mt-2">Please ensure the backend server is running.</p>
+            <div className="text-center py-12 bg-brand-sale-tint rounded-xl border border-brand-sale/20">
+                <p className="text-brand-sale font-bold">Failed to load products.</p>
+                <p className="text-sm text-brand-sale mt-2">Please ensure the backend server is running.</p>
             </div>
         );
     }

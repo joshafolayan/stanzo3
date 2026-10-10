@@ -52,16 +52,16 @@ const ResetPassword = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md w-full">
-                    <div className="text-red-500 mb-4 mx-auto w-12 h-12 flex items-center justify-center bg-red-50 rounded-full">
+                    <div className="text-brand-sale mb-4 mx-auto w-12 h-12 flex items-center justify-center bg-brand-sale-tint rounded-full">
                         <Lock size={24} />
                     </div>
                     <h2 className="text-xl font-bold text-gray-800 mb-2">Invalid Link</h2>
                     <p className="text-gray-600 mb-6">This password reset link is invalid or missing a token.</p>
-                    <button onClick={() => navigate('/login')} className="text-blue-600 font-bold hover:underline">
+                    <button onClick={() => navigate('/login')} className="text-brand-accent font-bold hover:underline">
                         Return to Login
                     </button>
                     <div className="mt-4">
-                        <button onClick={() => navigate('/forgot-password')} className="text-blue-600 font-bold hover:underline">
+                        <button onClick={() => navigate('/forgot-password')} className="text-brand-accent font-bold hover:underline">
                             Request New Link
                         </button>
                     </div>
@@ -74,7 +74,7 @@ const ResetPassword = () => {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
             <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-brand-ivory text-brand-accent rounded-full flex items-center justify-center mx-auto mb-4">
                         <Lock size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800">Reset Password</h1>
@@ -82,15 +82,15 @@ const ResetPassword = () => {
                 </div>
 
                 {success ? (
-                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-6 rounded-lg text-center">
+                    <div className="bg-brand-olive-tint border border-brand-olive/30 text-brand-olive px-4 py-6 rounded-lg text-center">
                         <p className="font-bold text-lg mb-2">Success!</p>
                         <p>Your password has been reset.</p>
-                        <p className="text-sm mt-4 text-green-600">Redirecting to login...</p>
+                        <p className="text-sm mt-4 text-brand-olive">Redirecting to login...</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                            <div className="bg-brand-sale-tint border border-brand-sale/20 text-brand-sale px-4 py-3 rounded-lg text-sm">
                                 {error}
                             </div>
                         )}
@@ -102,7 +102,7 @@ const ResetPassword = () => {
                                     type={showNewPassword ? 'text' : 'password'}
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all pr-12"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-all pr-12"
                                     placeholder="••••••••"
                                     required
                                     minLength={6}
@@ -124,7 +124,7 @@ const ResetPassword = () => {
                                     type={showConfirmPassword ? 'text' : 'password'}
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all pr-12"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-all pr-12"
                                     placeholder="••••••••"
                                     required
                                 />
@@ -141,7 +141,7 @@ const ResetPassword = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={`w-full text-white font-bold py-3 rounded-lg transition-all duration-200 shadow-lg shadow-blue-200 flex items-center justify-center gap-2 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            className={`w-full text-white font-bold py-3 rounded-lg transition-all duration-200 shadow-lg shadow-blue-200 flex items-center justify-center gap-2 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-brand-black hover:bg-brand-charcoal'}`}
                         >
                             {isSubmitting ? 'Resetting...' : 'Reset Password'}
                             {!isSubmitting && <ArrowRight size={18} />}
