@@ -2,9 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { getImageUrl } from '../utils/image';
+import BannerSlider from './BannerSlider';
 
+// Shows the admin's banners when there are any; otherwise a standard welcome banner where
 // `featured` are the products whose photos fill the collage on the right
-const Hero = ({ featured = [], hasDeals = false }) => {
+const Hero = ({ banners = [], featured = [], hasDeals = false }) => {
+    if (banners.length > 0) return <BannerSlider banners={banners} />;
+
     const photos = featured
         .map(product => ({ id: product.id, name: product.name, src: getImageUrl(product.images?.[0] || product.image) }))
         .slice(0, 3);

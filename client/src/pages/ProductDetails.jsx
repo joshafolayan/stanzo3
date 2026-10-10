@@ -5,7 +5,9 @@ import { useCart } from '../context/CartContext';
 import { Check, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
 import clsx from 'clsx';
 import Header from '../components/Header';
+import WishlistButton from '../components/WishlistButton';
 import { getImageUrl } from '../utils/image';
+import { formatNaira, getSalePrice, hasWholesale } from '../utils/price';
 import { stockMode, getStock, isSoldOut as productSoldOut, isColorAvailable, isSizeAvailable } from '../utils/stock';
 
 const ProductDetails = () => {
@@ -66,6 +68,8 @@ const ProductDetails = () => {
     const remaining = selectionComplete ? getRemainingStock(product, colorName, selectedSize) : null;
     const cartFull = !isSoldOut && !optionSoldOut && remaining !== null && remaining < 1;
     const isLowStock = !isSoldOut && optionStock > 0 && optionStock <= 5;
+    // Which options the wholesale quantity can be mixed across, e.g. "colours and sizes"
+    const wholesaleMix = [product.colors?.length > 1 && 'colours', product.sizes?.filter(Boolean).length > 1 && 'sizes'].filter(Boolean).join(' and ');
     const canAdd = !isSoldOut && !optionSoldOut && !cartFull && selectionComplete;
 
     const buttonLabel = isSoldOut ? 'Sold Out'
@@ -157,15 +161,22 @@ const ProductDetails = () => {
 
                         <div className={clsx("text-xl", isLowStock || isSoldOut ? "mb-2" : "mb-8")}>
                             {product.discountPercentage > 0 && (
-                                <span className="line-through text-gray-400 mr-3">₦{product.price.toLocaleString()}</span>
+                                <span className="line-through text-gray-400 mr-3">{formatNaira(product.price)}</span>
                             )}
                             <span className="font-medium text-brand-black">
-                                ₦{(product.discountPercentage > 0 ? product.price * (1 - product.discountPercentage / 100) : product.price).toLocaleString()}
+                                {formatNaira(getSalePrice(product))}
                             </span>
                         </div>
 
                         {isSoldOut && <p className="text-sm font-medium text-red-600 mb-8 uppercase tracking-widest">Sold out</p>}
                         {isLowStock && <p className="text-sm font-medium text-red-600 mb-8">Only {optionStock} left{isVariant ? ' in this option' : ' in stock'}</p>}
+
+                        {hasWholesale(product) && !isSoldOut && (
+                            <p className="mb-8 self-start bg-green-50 text-green-800 text-sm px-4 py-3 rounded-lg">
+                                <span className="font-semibold">Wholesale:</span> {formatNaira(product.wholesalePrice)} each when you buy {product.wholesaleMinQty} or more
+                                {wholesaleMix && ` (any mix of ${wholesaleMix})`}
+                            </p>
+                        )}
 
                         {/* Colors */}
                         {product.colors && product.colors.length > 0 && (
@@ -256,6 +267,8 @@ const ProductDetails = () => {
                             {buttonLabel}
                         </button>
 
+                        <WishlistButton product={product} withLabel className="w-full mt-3" />
+
                         {product.description && (
                             <div className="mt-12 pt-10 border-t border-gray-200">
                                 <h3 className="text-sm font-medium uppercase tracking-widest mb-4">Description</h3>
@@ -267,7 +280,7 @@ const ProductDetails = () => {
 
                         <div className="mt-8 pt-8 border-t border-gray-200">
                             <ul className="text-xs text-brand-gray space-y-2 uppercase tracking-wide">
-                                <li>✓ Free shipping on orders over #100,000</li>
+                                <li>✓ Free shipping on orders over ₦100,000</li>
                                 <li>✓ Returns accepted within 14 days</li>
                                 <li>✓ Secure checkout</li>
                             </ul>

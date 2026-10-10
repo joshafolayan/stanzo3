@@ -129,6 +129,12 @@ const CartModal = ({ onCheckout }) => {
                                                         ₦{item.price.toLocaleString()} each
                                                     </p>
                                                 )}
+                                                {item.isWholesale && (
+                                                    <p className="text-[10px] font-semibold text-green-600">Wholesale price</p>
+                                                )}
+                                                {item.wholesaleOffer && (
+                                                    <p className="text-[10px] text-gray-500">₦{item.wholesaleOffer.price.toLocaleString()} each for {item.wholesaleOffer.minQty}+</p>
+                                                )}
                                             </div>
                                             <button
                                                 onClick={() => removeFromCart(item.cartId)}

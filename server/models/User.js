@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
         default: 'user',
         enum: ['user', 'admin', 'manager', 'salesrep', 'superadmin']
     },
+    wishlist: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
     resetToken: String,
     resetTokenExpiry: Date
 }, {

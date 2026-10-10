@@ -7,7 +7,9 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
+import AdminBanners from './pages/admin/AdminBanners';
 import { AuthProvider } from './context/AuthContext';
+import { WishlistProvider } from './context/WishlistContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import AdminForgotPassword from './pages/admin/ForgotPassword';
@@ -19,6 +21,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import UserDashboard from './pages/UserDashboard';
+import Wishlist from './pages/Wishlist';
 import AdminOrders from './pages/admin/AdminOrders';
 import CartModal from './components/CartModal';
 import PaymentModal from './components/PaymentModal';
@@ -29,37 +32,41 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<StoreFront />} />
-            <Route path="/shop" element={<StoreFront />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
+        <WishlistProvider>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<StoreFront />} />
+              <Route path="/shop" element={<StoreFront />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/wishlist" element={<Wishlist />} />
 
-            {/* Auth/User Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/signup" element={<Navigate to="/register" replace />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
+              {/* Auth/User Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/signup" element={<Navigate to="/register" replace />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="categories" element={<AdminCategories />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="orders" element={<AdminOrders />} />
-              {/* Make products default for /admin */}
-              <Route index element={<AdminProducts />} />
-            </Route>
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="categories" element={<AdminCategories />} />
+                <Route path="banners" element={<AdminBanners />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="orders" element={<AdminOrders />} />
+                {/* Make products default for /admin */}
+                <Route index element={<AdminProducts />} />
+              </Route>
 
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
-            <Route path="/admin/reset-password" element={<AdminResetPassword />} />
-          </Routes>
-          <CartModal onCheckout={() => setIsPaymentOpen(true)} />
-          <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} />
-        </ErrorBoundary>
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+              <Route path="/admin/reset-password" element={<AdminResetPassword />} />
+            </Routes>
+            <CartModal onCheckout={() => setIsPaymentOpen(true)} />
+            <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} />
+          </ErrorBoundary>
+        </WishlistProvider>
       </AuthProvider>
     </BrowserRouter>
   );

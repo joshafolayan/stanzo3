@@ -24,6 +24,18 @@ const productSchema = new mongoose.Schema({
         max: 100,
         default: 0
     },
+    // Wholesale: buying wholesaleMinQty or more units of this product (any mix of colours/sizes)
+    // drops the unit price to wholesalePrice. Both null = no wholesale price.
+    wholesalePrice: {
+        type: Number,
+        min: 0,
+        default: null
+    },
+    wholesaleMinQty: {
+        type: Number,
+        min: 2,
+        default: null
+    },
     images: [{
         type: String
     }],

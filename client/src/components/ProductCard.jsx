@@ -4,7 +4,8 @@ import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { getImageUrl } from '../utils/image';
-import { formatNaira, getSalePrice } from '../utils/price';
+import WishlistButton from './WishlistButton';
+import { formatNaira, getSalePrice, hasWholesale } from '../utils/price';
 import { stockMode, getStock, getTotalStock, isSoldOut as productSoldOut, isSizeAvailable } from '../utils/stock';
 
 // `compact` swaps the inline colour/size pickers for a "Choose options" link - used in the homepage rows
@@ -125,6 +126,8 @@ const ProductCard = ({ product, compact = false }) => {
                         </div>
                     )}
 
+                    <WishlistButton product={product} className="absolute top-2 right-2 md:top-4 md:right-4 z-10" />
+
                     {/* Image — cropped fill at rest, cross-fades to the full
                         uncropped shot while the frame pops out on hover */}
                     {!imageFailed && (
@@ -179,8 +182,13 @@ const ProductCard = ({ product, compact = false }) => {
                             {formatNaira(getSalePrice(product))}
                         </span>
                     </p>
-                    {isLowStock && (
-                        <p className="text-[10px] md:text-xs font-medium text-red-600 -mt-1 md:-mt-3 mb-2">Only {totalStock} left</p>
+                    {(isLowStock || hasWholesale(product)) && (
+                        <div className="-mt-1 md:-mt-3 mb-2 space-y-0.5 text-[10px] md:text-xs font-medium">
+                            {hasWholesale(product) && (
+                                <p className="text-green-700">{formatNaira(product.wholesalePrice)} each for {product.wholesaleMinQty}+</p>
+                            )}
+                            {isLowStock && <p className="text-red-600">Only {totalStock} left</p>}
+                        </div>
                     )}
                 </div>
             </Link>

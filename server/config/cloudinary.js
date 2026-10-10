@@ -19,4 +19,17 @@ const storage = new CloudinaryStorage({
 
 const uploadCloud = multer({ storage });
 
-module.exports = { cloudinary, uploadCloud };
+// Homepage banners are shown full width, so they keep more resolution.
+// Same folder as products, so admin.js's destroyCloudinaryImage can delete them.
+const bannerStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'stanzo3_products',
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+        transformation: [{ width: 2000, height: 2000, crop: 'limit' }]
+    }
+});
+
+const uploadBanner = multer({ storage: bannerStorage, limits: { fileSize: 10 * 1024 * 1024 } });
+
+module.exports = { cloudinary, uploadCloud, uploadBanner };

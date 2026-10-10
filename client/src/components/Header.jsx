@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Search, User, X, Menu } from 'lucide-react';
+import { ShoppingCart, Search, User, X, Menu, Heart } from 'lucide-react';
 import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import Logo from './Logo';
 import { STORE } from '../config/store';
 
@@ -18,6 +19,7 @@ const NAV_LINKS = [
 const Header = () => {
     const { cart, setIsCartOpen } = useCart();
     const { user } = useAuth();
+    const { wishlistIds } = useWishlist();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const location = useLocation();
@@ -129,6 +131,15 @@ const Header = () => {
                                     <Link to="/register" className="hover:text-brand-gray transition-colors">Register</Link>
                                 </div>
                             )}
+
+                            <Link to="/wishlist" aria-label="Wishlist" className="relative text-brand-black hover:text-brand-gray transition-colors flex items-center">
+                                <Heart className="w-5 h-5" strokeWidth={1.5} />
+                                {wishlistIds.length > 0 && (
+                                    <span className="absolute -top-1.5 -right-2 bg-pink-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                                        {wishlistIds.length > 9 ? '9+' : wishlistIds.length}
+                                    </span>
+                                )}
+                            </Link>
 
                             <button
                                 onClick={() => setIsCartOpen(true)}

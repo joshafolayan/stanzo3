@@ -31,6 +31,8 @@ const AdminProducts = () => {
             name: '',
             price: '',
             discountPercentage: '',
+            wholesalePrice: '',
+            wholesaleMinQty: '',
             stockQuantity: '',
             category: 'Bags',
             colors: [{ name: '', hex: '' }],
@@ -148,6 +150,9 @@ const AdminProducts = () => {
             name: data.name,
             price: Number(data.price),
             discountPercentage: data.discountPercentage ? Number(data.discountPercentage) : 0,
+            // Blank = no wholesale price; the server checks both are filled in together
+            wholesalePrice: data.wholesalePrice === '' ? null : Number(data.wholesalePrice),
+            wholesaleMinQty: data.wholesaleMinQty === '' ? null : Number(data.wholesaleMinQty),
             category: data.category,
             colors: data.colors,
             sizes: parseSizes(data.sizes)
@@ -203,6 +208,8 @@ const AdminProducts = () => {
                 name: product.name,
                 price: product.price,
                 discountPercentage: product.discountPercentage || '',
+                wholesalePrice: product.wholesalePrice ?? '',
+                wholesaleMinQty: product.wholesaleMinQty ?? '',
                 // The single number only carries over for products without colours/sizes
                 stockQuantity: stockMode(product) === 'single' && !product.colors?.length && !product.sizes?.length ? product.stockQuantity : '',
                 category: product.category || categories[0] || '',
@@ -215,6 +222,8 @@ const AdminProducts = () => {
                 name: '',
                 price: '',
                 discountPercentage: '',
+                wholesalePrice: '',
+                wholesaleMinQty: '',
                 stockQuantity: '',
                 category: categories[0] || '',
                 colors: [{ name: 'Black', hex: '#000000' }],
@@ -378,13 +387,22 @@ const AdminProducts = () => {
                                     <input {...register('name', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Price (#)</label>
+                                    <label className="block text-sm font-medium mb-1">Price (₦)</label>
                                     <input type="number" {...register('price', { required: true })} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Discount (%)</label>
                                     <input type="number" min="0" max="100" {...register('discountPercentage')} placeholder="e.g. 10" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Wholesale price <span className="font-normal text-gray-400">(optional)</span></label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <input type="number" min="0" {...register('wholesalePrice')} placeholder="Price each (₦)" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    <input type="number" min="2" step="1" {...register('wholesaleMinQty')} placeholder="When buying at least (e.g. 5)" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Counts every unit of this product in the order, across all colours and sizes. Leave both blank for no wholesale price.</p>
                             </div>
 
                             <div>

@@ -27,6 +27,7 @@ const StoreFront = () => {
     const [error, setError] = useState(null);
     const [topSellers, setTopSellers] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [banners, setBanners] = useState([]);
 
     const [searchParams] = useSearchParams();
     const location = useLocation();
@@ -50,7 +51,10 @@ const StoreFront = () => {
 
         fetchProducts();
 
-        // Extra homepage sections - if either fails, its section just doesn't show
+        // Extra homepage sections - if one fails, its section just doesn't show (or falls back)
+        axios.get('/api/banners')
+            .then(({ data }) => setBanners(data))
+            .catch(err => console.error('Failed to fetch banners:', err));
         axios.get('/api/products/top-sellers?limit=24')
             .then(({ data }) => setTopSellers(data))
             .catch(err => console.error('Failed to fetch top sellers:', err));
@@ -101,7 +105,7 @@ const StoreFront = () => {
             <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20 w-full">
                 {isHome && (
                     <>
-                        <Hero featured={deals.length > 0 ? deals : newArrivals} hasDeals={deals.length > 0} />
+                        <Hero banners={banners} featured={deals.length > 0 ? deals : newArrivals} hasDeals={deals.length > 0} />
                         <ProductRow title={FILTERS.deals.title} subtitle={FILTERS.deals.subtitle} seeAllTo="/shop?filter=deals" products={deals} />
                         <CategoryTiles categories={categories} />
                         <ProductRow title="Top Sellers" subtitle="Customer favourites" products={bestSellers} />

@@ -4,9 +4,10 @@ const multer = require('multer');
 const path = require('path');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
+const Banner = require('../models/Banner');
 const User = require('../models/User');
 const { protect, admin } = require('../middleware/auth');
-const { uploadCloud, cloudinary } = require('../config/cloudinary');
+const { uploadCloud, uploadBanner, cloudinary } = require('../config/cloudinary');
 
 const STAFF_ROLES = ['admin', 'manager', 'salesrep', 'superadmin'];
 const ADMIN_ROLES = ['admin', 'superadmin']; // roles that can manage staff accounts
@@ -49,6 +50,22 @@ const parseProductData = (raw) => {
     if (input.discountPercentage !== undefined) {
         data.discountPercentage = Number(input.discountPercentage) || 0;
         if (data.discountPercentage < 0 || data.discountPercentage > 100) throw new Error('Discount must be between 0 and 100');
+    }
+    // Wholesale price and minimum quantity go together: both set, or both blank
+    if (input.wholesalePrice !== undefined || input.wholesaleMinQty !== undefined) {
+        const blank = (v) => v === undefined || v === null || v === '';
+        const wholesalePrice = blank(input.wholesalePrice) ? null : Number(input.wholesalePrice);
+        const wholesaleMinQty = blank(input.wholesaleMinQty) ? null : Number(input.wholesaleMinQty);
+        if ((wholesalePrice === null) !== (wholesaleMinQty === null)) {
+            throw new Error('Enter both a wholesale price and a minimum quantity, or leave both blank');
+        }
+        if (wholesalePrice !== null) {
+            if (!Number.isFinite(wholesalePrice) || wholesalePrice <= 0) throw new Error('Wholesale price must be more than 0');
+            if (!Number.isInteger(wholesaleMinQty) || wholesaleMinQty < 2) throw new Error('Wholesale minimum quantity must be a whole number of 2 or more');
+            if (data.price !== undefined && wholesalePrice >= data.price) throw new Error('Wholesale price must be lower than the normal price');
+        }
+        data.wholesalePrice = wholesalePrice;
+        data.wholesaleMinQty = wholesaleMinQty;
     }
     data.colors = (Array.isArray(input.colors) ? input.colors : [])
         .map(c => ({ name: String(c?.name || '').trim(), hex: String(c?.hex || '') }));
@@ -219,6 +236,109 @@ router.delete('/categories/:id/image', protect, admin, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error removing category image' });
+    }
+});
+
+// --- Homepage banners ---
+
+const BANNER_TEXT_LIMITS = { eyebrow: 80, title: 120, subtitle: 300, buttonText: 40, buttonLink: 500 };
+
+// Only these fields can be set from the banner form
+const parseBannerData = (body) => {
+    const data = {};
+    for (const [field, limit] of Object.entries(BANNER_TEXT_LIMITS)) {
+        if (body[field] === undefined) continue;
+        data[field] = String(body[field]).trim();
+        if (data[field].length > limit) throw new Error(`${field} must be ${limit} characters or fewer`);
+    }
+    // A path on this site or an https link - never javascript: or other schemes
+    if (data.buttonLink && !/^\/(?!\/)/.test(data.buttonLink) && !/^https:\/\//i.test(data.buttonLink)) {
+        throw new Error('Button link must start with / (a page on this site) or https://');
+    }
+    if (body.active !== undefined) data.active = body.active === true || body.active === 'true';
+    if (body.sortOrder !== undefined && body.sortOrder !== '') {
+        data.sortOrder = Number(body.sortOrder);
+        if (!Number.isInteger(data.sortOrder)) throw new Error('Order must be a whole number');
+    }
+    return data;
+};
+
+// Upload the banner's 'image' field, turning upload problems into a readable 400
+const bannerImage = (req, res, next) => uploadBanner.single('image')(req, res, (err) => {
+    if (!err) return next();
+    const message = err.code === 'LIMIT_FILE_SIZE' ? 'Image must be 10MB or smaller' : (err.message || 'Image upload failed');
+    res.status(400).json({ message });
+});
+
+// GET /api/admin/banners - All banners, including hidden ones
+router.get('/banners', protect, admin, async (req, res) => {
+    try {
+        res.json(await Banner.find({}).sort({ sortOrder: 1, createdAt: 1 }).lean());
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error fetching banners' });
+    }
+});
+
+// POST /api/admin/banners - Create a banner (multipart: fields + 'image')
+router.post('/banners', protect, admin, bannerImage, async (req, res) => {
+    try {
+        let data;
+        try {
+            data = parseBannerData(req.body);
+            if (!data.title) throw new Error('A title is required');
+            if (!req.file) throw new Error('An image is required');
+        } catch (err) {
+            if (req.file) await destroyCloudinaryImage(req.file.path);
+            return res.status(400).json({ message: err.message });
+        }
+        const banner = await Banner.create({ ...data, image: req.file.path });
+        res.status(201).json(banner);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error creating banner' });
+    }
+});
+
+// PUT /api/admin/banners/:id - Update a banner; a new 'image' replaces the old one
+router.put('/banners/:id', protect, admin, bannerImage, async (req, res) => {
+    try {
+        const banner = await Banner.findById(req.params.id);
+        let data;
+        try {
+            if (!banner) throw Object.assign(new Error('Banner not found'), { status: 404 });
+            data = parseBannerData(req.body);
+            if (data.title === '') throw new Error('A title is required');
+        } catch (err) {
+            if (req.file) await destroyCloudinaryImage(req.file.path);
+            return res.status(err.status || 400).json({ message: err.message });
+        }
+        if (req.file) {
+            await destroyCloudinaryImage(banner.image);
+            data.image = req.file.path;
+        }
+        Object.assign(banner, data);
+        await banner.save();
+        res.json(banner);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error updating banner' });
+    }
+});
+
+// DELETE /api/admin/banners/:id
+router.delete('/banners/:id', protect, admin, async (req, res) => {
+    try {
+        const banner = await Banner.findById(req.params.id);
+        if (!banner) {
+            return res.status(404).json({ message: 'Banner not found' });
+        }
+        await destroyCloudinaryImage(banner.image);
+        await banner.deleteOne();
+        res.json({ message: 'Banner removed' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error deleting banner' });
     }
 });
 

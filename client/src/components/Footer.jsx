@@ -47,6 +47,7 @@ const Footer = () => {
                             <li><Link to="/shop" className={linkClass}>All products</Link></li>
                             <li><Link to="/shop?filter=deals" className={linkClass}>Deals</Link></li>
                             <li><Link to="/shop?filter=new" className={linkClass}>New arrivals</Link></li>
+                            <li><Link to="/wishlist" className={linkClass}>Wishlist</Link></li>
                             <li><Link to={user ? '/dashboard' : '/login'} className={linkClass}>My account</Link></li>
                         </ul>
                     </div>

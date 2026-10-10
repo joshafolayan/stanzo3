@@ -1,8 +1,10 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Category = require('../models/Category');
+const Banner = require('../models/Banner');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
@@ -10,6 +12,7 @@ const { protect, SECRET_KEY, VERIFY_OPTIONS } = require('../middleware/auth');
 const User = require('../models/User');
 const { sendOrderConfirmationEmail, sendNewOrderAdminEmail } = require('../utils/email');
 const { checkStock, stockMode } = require('../utils/stock');
+const { unitPrice } = require('../utils/pricing');
 
 // GET /api/products - Get all products
 router.get('/products', async (req, res) => {
@@ -67,6 +70,95 @@ router.get('/categories', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error fetching categories' });
+    }
+});
+
+// GET /api/banners - Active homepage hero slides, in display order
+router.get('/banners', async (req, res) => {
+    try {
+        const banners = await Banner.find({ active: true }).sort({ sortOrder: 1, createdAt: 1 }).lean();
+        res.json(banners);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error fetching banners' });
+    }
+});
+
+// --- Wishlist (signed-in customers; guests keep theirs in the browser) ---
+const WISHLIST_LIMIT = 200;
+const isObjectId = (id) => typeof id === 'string' && mongoose.Types.ObjectId.isValid(id);
+
+// Respond with the wishlist as product ids, dropping products that have since been deleted
+const sendWishlist = async (res, userId) => {
+    const user = await User.findById(userId).select('wishlist').lean();
+    if (!user) return res.status(404).json({ message: 'Account not found' });
+    const existing = await Product.find({ _id: { $in: user.wishlist || [] } }).select('_id').lean();
+    const live = new Set(existing.map(p => String(p._id)));
+    res.json({ ids: (user.wishlist || []).map(String).filter(id => live.has(id)) });
+};
+
+// GET /api/wishlist
+router.get('/wishlist', protect, async (req, res) => {
+    try {
+        await sendWishlist(res, req.user.id);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error fetching wishlist' });
+    }
+});
+
+// PUT /api/wishlist/:productId - Save a product
+router.put('/wishlist/:productId', protect, async (req, res) => {
+    try {
+        const { productId } = req.params;
+        if (!isObjectId(productId) || !(await Product.exists({ _id: productId }))) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        const result = await User.updateOne(
+            { _id: req.user.id, [`wishlist.${WISHLIST_LIMIT - 1}`]: { $exists: false } },
+            { $addToSet: { wishlist: productId } }
+        );
+        if (result.matchedCount === 0) {
+            return res.status(400).json({ message: `Your wishlist is full (${WISHLIST_LIMIT} items). Remove something first.` });
+        }
+        await sendWishlist(res, req.user.id);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error updating wishlist' });
+    }
+});
+
+// DELETE /api/wishlist/:productId - Remove a product
+router.delete('/wishlist/:productId', protect, async (req, res) => {
+    try {
+        const { productId } = req.params;
+        if (isObjectId(productId)) {
+            await User.updateOne({ _id: req.user.id }, { $pull: { wishlist: productId } });
+        }
+        await sendWishlist(res, req.user.id);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error updating wishlist' });
+    }
+});
+
+// POST /api/wishlist/merge - Add what a guest saved in this browser to their account after signing in
+router.post('/wishlist/merge', protect, async (req, res) => {
+    try {
+        const ids = (Array.isArray(req.body.ids) ? req.body.ids : []).filter(isObjectId).slice(0, WISHLIST_LIMIT);
+        const user = await User.findById(req.user.id).select('wishlist');
+        if (!user) return res.status(404).json({ message: 'Account not found' });
+        const existing = await Product.find({ _id: { $in: ids } }).select('_id').lean();
+        const current = new Set(user.wishlist.map(String));
+        const toAdd = existing.map(p => String(p._id)).filter(id => !current.has(id))
+            .slice(0, Math.max(WISHLIST_LIMIT - current.size, 0));
+        if (toAdd.length > 0) {
+            await User.updateOne({ _id: user._id }, { $addToSet: { wishlist: { $each: toAdd } } });
+        }
+        await sendWishlist(res, req.user.id);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error updating wishlist' });
     }
 });
 
@@ -128,9 +220,8 @@ router.post('/checkout', checkoutLimiter, async (req, res) => {
             }
         }
 
-        // Verify prices and calculate total securely
-        let calculatedTotal = 0;
-        const processedItems = [];
+        // Verify each line first; prices are worked out once we know every line
+        const lines = [];
 
         for (const item of cart) {
             // Find the actual product in DB by ID
@@ -166,23 +257,31 @@ router.post('/checkout', checkoutLimiter, async (req, res) => {
                 return res.status(400).json({ success: false, message: `Invalid quantity for ${dbProduct.name}` });
             }
 
-            // Apply the product's discount (must match the price shown in the cart - see CartContext)
-            const discount = dbProduct.discountPercentage || 0;
-            const unitPrice = Math.round(dbProduct.price * (1 - discount / 100) * 100) / 100;
+            lines.push({ dbProduct, quantity, item });
+        }
 
-            const itemTotal = unitPrice * quantity;
-            calculatedTotal += itemTotal;
+        // Wholesale prices depend on how many units of a product are bought across all its colours/sizes
+        const unitsOfProduct = new Map();
+        for (const { dbProduct, quantity } of lines) {
+            const id = String(dbProduct._id);
+            unitsOfProduct.set(id, (unitsOfProduct.get(id) || 0) + quantity);
+        }
 
-            processedItems.push({
+        // Calculate prices and total securely (must match the prices shown in the cart - see CartContext)
+        let calculatedTotal = 0;
+        const processedItems = lines.map(({ dbProduct, quantity, item }) => {
+            const price = unitPrice(dbProduct, unitsOfProduct.get(String(dbProduct._id)));
+            calculatedTotal += price * quantity;
+            return {
                 product: dbProduct._id,
                 name: dbProduct.name,
-                price: unitPrice,
+                price,
                 originalPrice: dbProduct.price,
                 quantity,
                 selectedColor: item.selectedColor,
                 selectedSize: item.selectedSize
-            });
-        }
+            };
+        });
 
         // Make sure the items are available. Stock is only taken off when an admin marks the order as paid.
         try {

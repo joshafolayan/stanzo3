@@ -23,7 +23,9 @@ export const AuthProvider = ({ children }) => {
             (error) => {
                 // A 401 from login/register just means wrong credentials - let the form show the error
                 const isAuthAttempt = /\/api\/auth\/(login|register)$/.test(error.config?.url || '');
-                if (error.response && error.response.status === 401 && !isAuthAttempt) {
+                // Background requests (e.g. the wishlist) handle an expired session themselves
+                const isBackground = error.config?.skipAuthRedirect;
+                if (error.response && error.response.status === 401 && !isAuthAttempt && !isBackground) {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     delete axios.defaults.headers.common['Authorization'];

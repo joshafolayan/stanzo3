@@ -1,19 +1,20 @@
 import React, { createContext, useContext, useState } from 'react';
 import { getStock, stockKey } from '../utils/stock';
+import { getSalePrice, getUnitPrice, hasWholesale } from '../utils/price';
 
 const CartContext = createContext();
 
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-    const [cart, setCart] = useState([]);
+    const [items, setItems] = useState([]); // what was added; prices are worked out below
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
     // Units already in the cart that draw from the same stock (same option, or same product if stock is a single number)
     const getQuantityInCart = (product, color, size, excludeCartId = null) => {
         const key = stockKey(product, color, size);
-        return cart
+        return items
             .filter(item => item.cartId !== excludeCartId && stockKey(item, item.selectedColor, item.selectedSize) === key)
             .reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
     };
@@ -29,13 +30,8 @@ export const CartProvider = ({ children }) => {
         const remaining = getRemainingStock(product, color, size);
         if (remaining !== null && remaining < 1) return false;
 
-        // Must match the server's checkout calculation (server/routes/api.js)
-        const finalPrice = product.discountPercentage
-            ? Math.round(product.price * (1 - product.discountPercentage / 100) * 100) / 100
-            : product.price;
-
         const cartId = `${product._id}-${color || 'none'}-${size || 'none'}`;
-        setCart(prev => {
+        setItems(prev => {
             const existing = prev.find(item => item.cartId === cartId);
             if (existing) {
                 return prev.map(item =>
@@ -44,13 +40,13 @@ export const CartProvider = ({ children }) => {
                         : item
                 );
             }
-            return [...prev, { ...product, cartId, price: finalPrice, originalPrice: product.price, selectedColor: color, selectedSize: size, quantity: 1 }];
+            return [...prev, { ...product, cartId, originalPrice: product.price, selectedColor: color, selectedSize: size, quantity: 1 }];
         });
         return true;
     };
 
     const removeFromCart = (cartId) => {
-        setCart(prev => prev.filter(item => item.cartId !== cartId));
+        setItems(prev => prev.filter(item => item.cartId !== cartId));
     };
 
     // Max quantity a cart line can be set to without exceeding stock; null = unlimited
@@ -61,7 +57,7 @@ export const CartProvider = ({ children }) => {
     };
 
     const updateQuantity = (cartId, quantity) => {
-        setCart(prev => prev.map(item => {
+        setItems(prev => prev.map(item => {
             if (item.cartId !== cartId) return item;
             const max = getMaxQuantity(item);
             const capped = max !== null && typeof quantity === 'number' ? Math.min(quantity, max) : quantity;
@@ -69,7 +65,23 @@ export const CartProvider = ({ children }) => {
         }));
     };
 
-    const clearCart = () => setCart([]);
+    const clearCart = () => setItems([]);
+
+    // Wholesale prices depend on the units of a product across all its cart lines (must match server checkout)
+    const unitsOfProduct = items.reduce((acc, item) => {
+        acc[item._id] = (acc[item._id] || 0) + (Number(item.quantity) || 0);
+        return acc;
+    }, {});
+    const cart = items.map(item => {
+        const product = { ...item, price: item.originalPrice };
+        const price = getUnitPrice(product, unitsOfProduct[item._id]);
+        const isWholesale = price < getSalePrice(product);
+        // Not at the wholesale quantity yet: tell the customer what it would take
+        const wholesaleOffer = !isWholesale && hasWholesale(product)
+            ? { price: product.wholesalePrice, minQty: product.wholesaleMinQty }
+            : null;
+        return { ...item, price, isWholesale, wholesaleOffer };
+    });
 
     const getCartTotal = () => cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
 
