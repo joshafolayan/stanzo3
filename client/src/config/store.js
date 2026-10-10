@@ -9,7 +9,7 @@ export const STORE = {
     // International format, digits only (used for wa.me links)
     whatsapp: '2347061663031',
     phone: '',
-    email: '',
+    email: 'support@allroundstores.com',
     address: '',
     hours: '',
     instagram: '', // full URL
