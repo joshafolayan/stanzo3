@@ -8,10 +8,10 @@ export const STORE = {
 
     // International format, digits only (used for wa.me links)
     whatsapp: '2347061663031',
-    phone: '',
+    phone: '2347061663031',
     email: 'support@allroundstores.com',
     address: '',
-    hours: '',
+    hours: 'Mon - Fri 10am -6pm, Sat 10am -2pm',
     instagram: '', // full URL
 
     // Scrolling bar at the top of every page
