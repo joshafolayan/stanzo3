@@ -17,7 +17,7 @@ const storage = new CloudinaryStorage({
     }
 });
 
-const uploadCloud = multer({ storage });
+const uploadCloud = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Homepage banners are shown full width, so they keep more resolution.
 // Same folder as products, so admin.js's destroyCloudinaryImage can delete them.

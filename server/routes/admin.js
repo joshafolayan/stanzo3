@@ -440,8 +440,20 @@ router.put('/orders/:id/status', protect, admin, async (req, res) => {
     }
 });
 
+// Keep in sync with MAX_NEW_IMAGES in client/src/pages/admin/AdminProducts.jsx
+const MAX_PRODUCT_IMAGES_PER_SAVE = 10;
+
+// Upload the product's 'images' field, turning upload problems into a readable 400
+const productImages = (req, res, next) => uploadCloud.array('images', MAX_PRODUCT_IMAGES_PER_SAVE)(req, res, (err) => {
+    if (!err) return next();
+    const message = err.code === 'LIMIT_FILE_SIZE' ? 'Each image must be 10MB or smaller'
+        : err.code === 'LIMIT_UNEXPECTED_FILE' ? `You can upload up to ${MAX_PRODUCT_IMAGES_PER_SAVE} images at a time`
+        : (err.message || 'Image upload failed');
+    res.status(400).json({ message });
+});
+
 // POST /api/admin/products - Create Product
-router.post('/products', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
+router.post('/products', protect, admin, productImages, async (req, res) => {
     try {
         let productData;
         try {
@@ -468,7 +480,7 @@ router.post('/products', protect, admin, uploadCloud.array('images', 5), async (
 });
 
 // PUT /api/admin/products/:id - Update Product
-router.put('/products/:id', protect, admin, uploadCloud.array('images', 5), async (req, res) => {
+router.put('/products/:id', protect, admin, productImages, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         let productData;

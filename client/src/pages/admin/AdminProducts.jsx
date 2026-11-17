@@ -21,7 +21,8 @@ const AdminProducts = () => {
     const [existingImages, setExistingImages] = useState([]); // URLs already saved on the product
     const [newImages, setNewImages] = useState([]); // { file, preview } selected but not yet uploaded
     const itemsPerPage = 10;
-    const MAX_NEW_IMAGES = 5;
+    const MAX_NEW_IMAGES = 10; // keep in sync with MAX_PRODUCT_IMAGES_PER_SAVE in server/routes/admin.js
+    const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
     const [variantQty, setVariantQty] = useState({}); // "colour|size" -> quantity typed in the stock grid
     const [showStockErrors, setShowStockErrors] = useState(false);
     const [bulkQty, setBulkQty] = useState('');
@@ -76,8 +77,12 @@ const AdminProducts = () => {
     };
 
     const handleImageSelect = (e) => {
-        const files = Array.from(e.target.files || []);
+        const picked = Array.from(e.target.files || []);
         e.target.value = ''; // allow re-selecting the same file
+        const files = picked.filter(file => file.size <= MAX_IMAGE_BYTES);
+        if (files.length < picked.length) {
+            alert(`${picked.length - files.length} image(s) skipped: each image must be 10MB or smaller.`);
+        }
         const room = MAX_NEW_IMAGES - newImages.length;
         if (files.length > room) {
             alert(`You can upload up to ${MAX_NEW_IMAGES} new images at a time.`);
@@ -458,7 +463,7 @@ const AdminProducts = () => {
                                 )}
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition">
                                     <input type="file" onChange={handleImageSelect} multiple accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                                    <p className="text-xs text-gray-400 mt-2">Up to {MAX_NEW_IMAGES} new images per save. New images are added after existing ones.</p>
+                                    <p className="text-xs text-gray-400 mt-2">Up to {MAX_NEW_IMAGES} new images per save, 10MB each. New images are added after existing ones.</p>
                                 </div>
                             </div>
 
